@@ -1,0 +1,2240 @@
+---
+title: "Environmental variability and longevity predict the speed of the acute glucocorticoid response across birds."
+author: 
+ - Conor C. Taff
+ - John C. Wingfield
+ - Maren N. Vitousek
+header-includes:
+  - \usepackage[font={footnotesize}, labelfont={bf}]{caption}
+  - \usepackage{setspace}\doublespacing
+  #- \usepackage{lineno}\linenumbers
+fontsize: 12pt
+output: 
+  bookdown::pdf_document2:
+      number_sections: FALSE
+      toc: FALSE
+      extra_dependencies: ["flafter"]
+  bookdown::word_document2:
+      number_sections: FALSE
+      toc: FALSE
+      extra_dependcies: ["flafter"]
+  bookdown::html_document2:
+      number_sections: FALSE
+      toc: TRUE
+bibliography: references.bib
+csl: hormone-behavior.csl
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(ggplot2, here, tidyverse, viridis, gridExtra, simcoRt, png, sf, rnaturalearth, lme4, sjPlot, ape, MCMCglmm, phytools)
+```
+
+*CCT & MNV: Department of Ecology & Evolutionary Biology and Lab of Ornithology, Cornell University*  
+*JCW: Department of Neurobiology, Physiology, and Behavior, University of California-Davis*  
+
+
+*Correspondance: Conor Taff; cct63@cornell.edu*  
+
+**This version was for the initial submission before peer review.**
+
+## ABSTRACT
+
+The acute glucocorticoid response is a key mediator of the coordinated vertebrate response to unpredictable challenges. Rapid increases in glucocorticoids initiate a series of changes that can allow animals to effectively cope with or avoid stressors. It has become clear that the scope of the GC response—defined here as the absolute increase in GCs—is often associated with among-individual differences in performance and fitness and varies across species based on environment and life history. In addition to varying in scope, GC responses can differ enormously in speed; however, relatively little is known about whether speed and scope covary or how selection shapes variation in speed. We used a database of corticosterone samples collected at 5 time points from 1,750 individuals of 58 species of birds to ask i) how the speed and scope of the GC response covary among individuals and species and ii) whether variation among species in the speed of the response is predicted by environmental context or key life history traits. As predicted by a recent optimality model, faster absolute GC responses were strongly associated with a larger scope both among-individuals and among-species. Despite this covariation, the relative speed of the GC response (as a percentage of scope) varied independently of scope, suggesting that selection could operate on both features of the response independently. Species with faster relative GC responses lived in locations with more intra-season variation in temperature and had shorter lifespans. Our results suggest that rapid changes associated with the speed of the GC response, such as those occurring through non-genomic receptors, might be an important determinant of coping ability and we emphasize the need for studies explicitly designed to measure speed independently of scope.
+
+*Keywords: stress, corticosterone, comparative physiology, evolutionary endocrinology*
+
+## INTRODUCTION
+
+Wild animals often encounter unpredictable and rapidly changing environmental conditions. For vertebrates, the glucocorticoid (GC) mediated stress response plays a primary role in coordinating phenotypic changes that allow animals to persist in challenging conditions [@sapolsky2000; @wingfield1998]. Decades of evidence now demonstrate that rapid changes in GC hormones can alter a variety of downstream traits including metabolism, behavior, gene expression, and physiology in ways that promote the avoidance or tolerance of stressors [@dallman2005; @datson2008; @wingfield1998; @sapolsky2000]. 
+
+While the basic structure of the GC response system is highly conserved [@romero2019], individuals and species differ enormously in their absolute levels of circulating GCs under baseline and stress-induced conditions and in their regulation of GC levels [@vitousek2019; @romero2019]. Growing evidence suggests that observed differences in absolute GC levels between species reflect adaptation resulting from selection based on environmental context and life history [@vitousek2019; @williams2008; @cockrem2013; @breuner2008; @bonier2009; @schoenle2018]. However, in addition to varying in the scope of the GC response, individuals and species may vary in the speed of response (see definition in Box 1). In contrast to absolute levels, relatively little is known about how selection shapes the speed of GC responses.
+
+The speed of the GC response might be an important target of selection if it determines how quickly individuals can match their phenotype to changing conditions [@taff2016; @luttbeg2021]. Because the acute stress response is a multi-component system that includes a variety of downstream changes [@sapolsky2000], there will necessarily be a lag between the perception of any stressor and the production of the full stress-induced phenotype. Thus, a faster GC response should allow animals to more quickly match their phenotype with the prevailing environmental conditions [@taff2016]. At the same time, responding faster might incur costs that could be avoided with a slower response, because prolonged or chronic elevation of GC levels can result in a variety of well known costs [@korte2005]. Responding more slowly might allow animals to calibrate their response as additional information about a stressor is accumulated.
+
+Disentangling the speed and scope of GC responses is challenging for several reasons. First, because the same physiological systems are involved in the speed and scope of the GC response, there are likely to be mechanistic links that create covariation between different attributes even when selection acts on only a single feature. For example, variation in FKBP5 expression could simultaneously alter the speed and magnitude of response [@zimmer2020fkbp5]. Second, selection may favor the coupling of particular speed and scope combinations even when there is no intrinsic mechanistic link. For example, Luttbeg et al [-@luttbeg2021] recently used optimality modeling of the speed of acute stress responses to show that altering GC regulation rate changes the optimal baseline and stress-induced GC levels under a variety of conditions. Finally, from a purely logistical perspective, separately measuring the speed and scope of stress responses is technically challenging [@taff2021]. The most frequently used study designs are better able to detect variation in scope even when substantial variation in speed exists, and variation in speed may often be interpreted as variation in scope when samples are collected at standardized times [@taff2021].
+
+Given the challenge of measuring the speed of GC responses, it is not surprising that there is much more empirical evidence suggesting the importance of variation in scope [e.g., @vitousek2019; @schoenle2018]. However, there are also suggestions in the literature that variation in speed might differ in important ways between individuals in some situations. For example, wild great tits (*Parus major*) that were more cautious in a behavioral assay also had a faster increase in corticosterone during the three minutes after capture [@baugh2013]. A handful of other papers also report differences in aspects of the speed of GC responses between isogenic lines [@sadoul2015] or in relation to individual characteristics such as age and dominance [@sapolsky1993; @sapolsky1991],  food availability [@heath1998], prior experience [@cockrem2013], or maternal condition [@weber2018]. In addition to variation between individuals, there is ample evidence that the time required to reach maximum GC levels differs with life history stage [@wingfield1992], between populations [@zimmer2020; @addis2011], and between species [@romero2005; @vitousekhormonebase], although these studies typically interpret variation primarily or exclusively in terms of scope.
+
+Despite this evidence that the speed of the GC response varies and suggestions that this variation might be an important target of selection, there has been little effort to assemble a complete conceptual framework for predicting when faster or slower GC responses would be favored at either an individual or population level. In contrast, a wide range of conceptual and mathematical models have explored the conditions under which the scope of the GC response is expected to be larger or smaller [e.g., @wingfield1998; @romero2009; @taborsky2020]. These models have been applied to empirical data at both the between-individual and between species levels [@vitousek2019; @schoenle2018; @jessop2013; @jessop2016; @bokony2009; @hau2010]. 
+
+In this paper, our goal was to first develop a set of hypotheses and predictions describing the conditions under which faster or slower GC responses should be favored. For this goal we borrowed heavily from existing frameworks for understanding variation in scope and translated these predictions to a set of hypotheses that might explain variation in speed of the GC response between individuals or populations (see below). We also evaluated support for predictions about how the speed and scope of GC responses covary among individuals and among species. 
+
+To evaluate evidence for these hypotheses, we used a database of corticosterone measurements in birds. The data available were more appropriate for testing differences in speed of GC regulation between species and we focus on those comparisons, but we emphasize that each of our hypotheses could also apply at the between-individual level and that different patterns of covariation might occur at each level [@agrawal2020]. Finally, we lay out recommendations and directions for future study in this area. Throughout the paper, we focus on the acute GC response because most empirical data includes measurements of this aspect of the stress response, but many of the hypotheses and ideas developed here will apply equally well to other components of the integrated stress response that change rapidly after encountering a stressor. Measuring multiple aspects of the acute stress response to evaluate whether a faster GC response always results in faster downstream changes in phenotype will be a fruitful area for future study.  
+
+*Covariation in speed and scope* 
+
+
+The speed and scope of endocrine responses could covary due to shared regulatory mechanisms, or as a result of selection operating simultaneously on both traits. Although phenotypic correlation does not necessarily equate to genetic correlation, no or weak phenotypic correlation between these traits would suggest that they could be independently shaped by selection. Covariation between speed and scope is also important to understand because the particular patterns of covariation and relative amount of variation in each trait will have a strong effect on how well particular experimental designs can separately measure speed and scope [@taff2021]. A recent optimality model by Luttbeg et al. [-@luttbeg2021] revealed that slower GC responses lead to more similar baseline and stress-induced GC levels (i.e., a lower scope of response) when the increased lag time between encountering a stressor and responding appropriately elevates the likelihood of a mismatch between context and hormonal state. Here, we tested whether these predictions are supported at the among-individual and among-species levels. Specifically, we tested whether individuals and species that mount a faster GC stress response have lower baseline GCs, higher stress-induced GCs, and a larger GC scope (maximum - baseline). 
+
+*The environmental and life history predictors of rapid GC responses*
+
+We predict that selection will favor faster GC stress responses in environments in which significant challenges are common - and in which the effects of those challenges could be ameliorated by rapid hormone-mediated plasticity. This overarching hypothesis is similar to the “supportive” hypothesis previously proposed to explain variation in baseline GCs and the scope of the acute stress response [@vitousek2019]; however, we anticipate that the specific environmental and life history contexts that most strongly favor a rapid response versus a high scope response will differ. Because of the role of GCs in mediating thermoregulation through metabolic effects and the response to environmental challenges [e.g., @jessop2016; @debonne2008; @ruuskanen2021] we predict that: (1) faster GC responses will be favored in environments with greater thermal variability and/or unpredictability, and possibly also (2) in environments with greater variability or unpredictability in rainfall. We also predict that because smaller organisms generally have fewer energetic reserves, selection will favor (3) a more rapid GC stress response in smaller species. Similarly, when controlling for body size, we predict that (4) species with a higher metabolic rate (and thus higher total energetic demand) will mount faster GC stress responses. Note however that a positive covariation between metabolic rate and the speed of GC responses could also be a byproduct of the generally faster rate of biochemical processes that accompany high metabolic rates, rather than selection specifically favoring fast GC stress responses in these species.  
+
+Because mounting a GC stress response imposes a variety of costs, selection may also favor a muted GC stress response in contexts in which these costs are likely to be particularly damaging (the “protective” hypothesis: Vitousek et al. 2019). If a slower GC stress response reduces the likelihood that a response will be triggered inappropriately by challenges that cease before the onset of GC-mediated plasticity, or provides individuals with more time to evaluate the nature of a challenge before responding, then slower responses may be especially beneficial in some contexts [@taff2016; @luttbeg2021]. We predict that because the acute GC stress response often impairs reproduction [e.g., @bokony2009; @sapolsky2000; @wingfield2003], (5) organisms engaging in high value reproductive attempts (those with fewer lifetime opportunities to reproduce) will mount slower stress responses during breeding. 
+
+The nature of the challenges that organisms face are likely to affect the optimal speed of GC responses, in addition to their scope [e.g., @schoenle2018]. When predation and other extrinsic threats are relatively common but variable in frequency, and when the risk of these threats can be mitigated by GC-induced plasticity, then we predict more rapid responses will be favored. Because data on the frequency or nature of threats faced by individuals in the populations measured here are not available we were not able to test this prediction directly. However, we tested the related prediction that (6) shorter-lived species (which generally face more extrinsic threats) will mount faster GC responses. Note however that this same relationship could reflect selection favoring slower responses in longer-lived species, which may be more susceptible to accumulated phenotypic damage resulting from high GC levels [@vitousek2019; @schoenle2021].  
+
+```{r concept-fig, echo = FALSE, message = FALSE, out.width = "75%", warning = FALSE, fig.align = "center", fig.cap = "Panel A illustrates the data available when only a baseline and stress-induced sample are collected (points) from each individual (different colors) during a standardized stressor protocol. Dashed lines are the inferred increase in glucocorticoids in the interval between sampling. Panel B-E illustrate four different patterns of true acute responses (solid lines) that could produce the same observed data from Panel A. Individuals might differ only in the scope of their response with no variation in speed (A) or they might differ in the speed of the response without differing in scope (C). Alternatively, individuals might differ in both speed and scope (C and D). Depending on the nature of variation in both attributes and the timing of sampling, data collected at two time points might still capture variation in speed and scope (D) or it might entirely misrepresent variation in speed and scope (D)."}
+
+
+#knitr::include_graphics("speed_scope_figure.png", dpi = NA)
+
+```
+
+```{r load-data, echo = FALSE, message = FALSE, warning = FALSE}
+
+## Now load in the data. There is a long version and a wide version.
+  
+  dl <- read.delim(here::here("1_raw_data", "raw_data_long.txt"))
+  dw <- read.delim(here::here("1_raw_data", "raw_data_wide.txt"))
+  dl$latency.s <- scale(dl$latency)
+
+## Fix some column types
+  
+  dl$cort <- as.numeric(as.character(dl$cort))
+  
+## summarize number of samples per species by time bin
+  
+    dl$rn_lat <- ceiling(dl$latency)
+    dl$rn_lat_bin <- 5 * ceiling(dl$rn_lat / 5)
+  
+  # save only ones with a valid cort measure    
+    dlx <- subset(dl, is.na(dl$cort) == FALSE)
+    dlf <- dlx %>%
+      group_by(alpha, rn_lat_bin) %>%
+      summarise(cort_mu = mean(cort), n = n()) 
+  
+  # count the number of observations in each bin    
+    dlf2 <- pivot_wider(dlf, id_cols = "alpha", names_from = "rn_lat_bin", names_prefix = "bin_", names_sep = "_", values_from = "n")
+    dlf3 <- as.data.frame(dlf2[, c("alpha", "bin_5", "bin_10", "bin_15", "bin_20", "bin_25", "bin_30", "bin_35", 
+                                   "bin_50", "bin_55", "bin_60", "bin_65", "bin_70", "bin_75", "bin_120")])
+    lim <- 4  # set limit for how many observations needed to include species
+    dlf3[is.na(dlf3)] <- 0
+    for(i in 1:nrow(dlf3)){
+      ifelse(dlf3$bin_5[i] > lim, dlf3$b5[i] <- 1, dlf3$b5[i] <- 0)
+      ifelse(dlf3$bin_10[i] > lim, dlf3$b10[i] <- 1, dlf3$b10[i] <- 0)
+      ifelse(dlf3$bin_15[i] > lim, dlf3$b15[i] <- 1, dlf3$b15[i] <- 0)
+      ifelse(dlf3$bin_20[i] > lim, dlf3$b20[i] <- 1, dlf3$b20[i] <- 0)
+      ifelse(dlf3$bin_25[i] > lim, dlf3$b25[i] <- 1, dlf3$b25[i] <- 0)
+      ifelse(dlf3$bin_30[i] > lim, dlf3$b30[i] <- 1, dlf3$b30[i] <- 0)
+      ifelse(dlf3$bin_35[i] > lim, dlf3$b35[i] <- 1, dlf3$b35[i] <- 0)
+      ifelse(dlf3$bin_60[i] > lim, dlf3$b60[i] <- 1, dlf3$b60[i] <- 0)
+      ifelse(dlf3$bin_65[i] > lim, dlf3$b65[i] <- 1, dlf3$b65[i] <- 0)
+      ifelse(dlf3$bin_70[i] > lim, dlf3$b70[i] <- 1, dlf3$b70[i] <- 0)
+      ifelse(dlf3$bin_75[i] > lim, dlf3$b75[i] <- 1, dlf3$b75[i] <- 0)
+      ifelse(dlf3$bin_120[i] > lim, dlf3$b120[i] <- 1, dlf3$b120[i] <- 0)
+    }
+    dlf3$sam_periods35 <- dlf3$b5 + dlf3$b10 + dlf3$b15 + dlf3$b20 + dlf3$b25 + dlf3$b30 + dlf3$b35 
+    dlf3$sam_periods60 <- dlf3$b60 + dlf3$b65 + dlf3$b70 + dlf3$b75 + dlf3$b120
+    
+    dlf4 <- subset(dlf3, dlf3$sam_periods35 > 2)  
+  
+  # subset initial dataset to the species identified here
+    dlf5 <- dlx[dlx$alpha %in% unique(dlf4$alpha), ]
+      
+    dlf5 <- subset(dlf5, is.na(dlf5$latency) == FALSE)
+    dlf5 <- subset(dlf5, dlf5$latency < 70)
+
+```
+
+```{r all-data, echo = FALSE, message = FALSE, warning = FALSE}
+
+    # ggplot(dlf5, mapping = aes(x = latency, y = cort, by = "alpha")) +
+    #   geom_point(size = 0.8, alpha = 0.5) +
+    #   theme_classic() +
+    #   geom_smooth(color = "coral3", se = FALSE, method = "gam") +
+    #   geom_smooth(color = "slateblue", se = FALSE, method = "loess", span = 0.8) +
+    #   coord_cartesian(ylim = c(0, 200)) +
+    #   xlab("Latency (minutes)") +
+    #   ylab("Corticosterone")
+
+#fig.cap = "All corticosterone measures (n = 7,148) from the 63 species with sufficient data to be included. Red line is a gam, blue line is a loess smooth with a larger span. The gaps in data between 10-20, 20-30, and 30-60 minutes make it really hard to fit smoothed curves for any species or overall. I think the approach we may have to take with these data is instead to just look at species averages at 0, 5, 10, 20, 30, and 60 minutes (not all species will have all the points)."
+
+```
+
+```{r wingfield-92, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 2.8, fig.width = 9.4, fig.cap = "Examples of empirical data showing differences between groups in (A) speed but not magnitude, (B) magnitude but not speed, (C and D) both speed and magnitude. All data are re-drawn from previously published studies included in a database maintained by Wingfield et al. Panel A and B are from Inca Doves and Black-throated Sparrows sampled during summer or winter in the Sonoran Desert. Panel C and D compare male and female Dark-eyed Juncos and Gambel's White-crowned Sparrows."}
+## redraw figures from wingfield et al 1992 or different ones showing examples of differences in speed or scope
+
+## INCA DOVE (Combining males and females)
+  inc <- subset(dlf5, dlf5$com_nm == "Inca Dove" )
+  for(i in 1:nrow(inc)){
+    if(inc$doy[i] < 100){inc$stage[i] <- "Winter"}
+    if(inc$doy[i] > 100){
+      inc$stage[i] <- "Summer"
+      if(inc$doy[i] > 300){inc$stage[i] <- "Winter"}
+    }
+  }
+
+## add a categorical time bin
+  for(i in 1:nrow(inc)){
+    if(inc$latency[i] < 3){inc$lat_bin[i] <- 1}
+    if(inc$latency[i] > 3 & inc$latency[i] < 7){inc$lat_bin[i] <- 5}
+    if(inc$latency[i] > 8 & inc$latency[i] < 12){inc$lat_bin[i] <- 10}
+    if(inc$latency[i] > 27 & inc$latency[i] < 33){inc$lat_bin[i] <- 30}
+    if(inc$latency[i] > 57 & inc$latency[i] < 63){inc$lat_bin[i] <- 60}
+  }
+
+## summarise to mean and se by group
+    inc_s <- inc %>%
+      group_by(stage, lat_bin) %>%
+      summarise(cort_mu = mean(cort),
+                cort_se = sd(cort, na.rm = TRUE) / sqrt(n()),
+                n = n())
+    
+    p1 <- ggplot(inc_s, mapping = aes(x = lat_bin, y = cort_mu, color = stage, shape = stage)) +
+      geom_line() +
+      geom_point(size = 2) +
+      scale_color_manual(values = c("#E69F00", "#56B4E9")) +
+      theme_bw() +
+      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+      xlab("Time after capture (min.)") +
+      ylab("Corticosterone (ng/ml)") +
+      theme(legend.title = element_blank(), legend.position = c(0.7, 0.15)) +
+      coord_cartesian(ylim = c(0, 38)) +
+      geom_errorbar(aes(ymin = cort_mu - cort_se,
+                        ymax = cort_mu + cort_se),
+                    width = 2) +
+      annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A") +
+      #labs(title = "Inca Dove") +
+      scale_x_continuous(breaks = c(0, 15, 30, 45, 60)) +
+      theme(axis.text = element_text(size = 10), axis.title = element_text(size = 12)) +
+      theme(legend.background = element_rect(fill = "transparent"))
+
+### Black throated sparrow
+    bts <- subset(dlf5, dlf5$com_nm == "Black-throated Sparrow")
+  for(i in 1:nrow(bts)){
+    if(bts$doy[i] < 100){bts$stage[i] <- "Winter"}
+    if(bts$doy[i] > 100){
+      bts$stage[i] <- "Summer"
+      if(bts$doy[i] > 300){bts$stage[i] <- "Winter"}
+    }
+  }
+
+## add a categorical time bin
+  for(i in 1:nrow(bts)){
+    if(bts$latency[i] < 3){bts$lat_bin[i] <- 1}
+    if(bts$latency[i] > 3 & bts$latency[i] < 7){bts$lat_bin[i] <- 5}
+    if(bts$latency[i] > 8 & bts$latency[i] < 12){bts$lat_bin[i] <- 10}
+    if(bts$latency[i] > 13 & bts$latency[i] < 17){bts$lat_bin[i] <- 15}
+    if(bts$latency[i] > 27 & bts$latency[i] < 33){bts$lat_bin[i] <- 30}
+    if(bts$latency[i] > 57 & bts$latency[i] < 63){bts$lat_bin[i] <- 60}
+  }
+
+## summarise to mean and se by group
+    bts_s <- bts %>%
+      group_by(stage, lat_bin) %>%
+      summarise(cort_mu = mean(cort),
+                cort_se = sd(cort, na.rm = TRUE) / sqrt(n()),
+                n = n())
+    
+    p2 <- ggplot(bts_s, mapping = aes(x = lat_bin, y = cort_mu, color = stage, shape = stage)) +
+      geom_line() +
+      geom_point(size = 2) +
+      scale_color_manual(values = c("#E69F00", "#56B4E9")) +
+      theme_bw() +
+      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+      xlab("Time after capture (min.)") +
+      ylab("") +
+      theme(legend.title = element_blank(), legend.position = c(0.7, 0.15)) +
+      coord_cartesian(ylim = c(0, 55)) +
+      geom_errorbar(aes(ymin = cort_mu - cort_se,
+                        ymax = cort_mu + cort_se),
+                    width = 2) +
+      annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B") +
+      #labs(title = "Black-throated Sparrow") +
+      scale_x_continuous(breaks = c(0, 15, 30, 45, 60)) +
+      theme(axis.text = element_text(size = 10), axis.title = element_text(size = 12)) +
+      theme(legend.background = element_rect(fill = "transparent"))
+   
+### Dark eyed junco
+    dej <- subset(dlf5, dlf5$com_nm == "Dark-eyed Junco")
+  for(i in 1:nrow(dej)){
+    if(dej$doy[i] < 100){dej$stage[i] <- "Winter"}
+    if(dej$doy[i] > 100){
+      dej$stage[i] <- "Summer"
+      if(dej$doy[i] > 300){dej$stage[i] <- "Winter"}
+    }
+  }
+
+## add a categorical time bin
+  for(i in 1:nrow(dej)){
+    if(dej$latency[i] < 3){dej$lat_bin[i] <- 1}
+    if(dej$latency[i] > 3 & dej$latency[i] < 7){dej$lat_bin[i] <- 5}
+    if(dej$latency[i] > 8 & dej$latency[i] < 12){dej$lat_bin[i] <- 10}
+    if(dej$latency[i] > 13 & dej$latency[i] < 17){dej$lat_bin[i] <- 15}
+    if(dej$latency[i] > 27 & dej$latency[i] < 33){dej$lat_bin[i] <- 30}
+    if(dej$latency[i] > 57 & dej$latency[i] < 63){dej$lat_bin[i] <- 60}
+  }
+
+## summarise to mean and se by group
+    dej_s <- dej %>%
+      group_by(sex, lat_bin) %>%
+      summarise(cort_mu = mean(cort),
+                cort_se = sd(cort, na.rm = TRUE) / sqrt(n()),
+                n = n())
+    
+    p3 <- ggplot(dej_s, mapping = aes(x = lat_bin, y = cort_mu, color = sex, shape = sex)) +
+      geom_line() +
+      geom_point(size = 2) +
+      scale_color_manual(labels = c("Female", "Male"), values = c("coral3", "gray20")) +
+      scale_shape_manual(labels = c("Female", "Male"), values = c(16, 17)) +
+      theme_bw() +
+      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+      xlab("Time after capture (min.)") +
+      ylab("") +
+      theme(legend.title = element_blank(), legend.position = c(0.7, 0.15)) +
+      #coord_cartesian(ylim = c(0, 55)) +
+      geom_errorbar(aes(ymin = cort_mu - cort_se,
+                        ymax = cort_mu + cort_se),
+                    width = 2) +
+      annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "C") +
+      #labs(title = "Dark-eyed Juno") +
+      scale_x_continuous(breaks = c(0, 15, 30, 45, 60)) +
+      theme(axis.text = element_text(size = 10), axis.title = element_text(size = 12))  +
+      theme(legend.background = element_rect(fill = "transparent"))   
+    
+### Gambel's white-crowned sparrow
+    gbwcs <- subset(dlf5, dlf5$com_nm == "Gambel's White-crowned Sparrow")
+    gbwcs <- subset(gbwcs, gbwcs$sex == "m" | gbwcs$sex == "f")
+  for(i in 1:nrow(gbwcs)){
+    if(gbwcs$doy[i] < 100){gbwcs$stage[i] <- "Winter"}
+    if(gbwcs$doy[i] > 100){
+      gbwcs$stage[i] <- "Summer"
+      if(gbwcs$doy[i] > 300){gbwcs$stage[i] <- "Winter"}
+    }
+  }
+
+## add a categorical time bin
+  for(i in 1:nrow(gbwcs)){
+    if(gbwcs$latency[i] < 3){gbwcs$lat_bin[i] <- 1}
+    if(gbwcs$latency[i] > 3 & gbwcs$latency[i] < 7){gbwcs$lat_bin[i] <- 5}
+    if(gbwcs$latency[i] > 8 & gbwcs$latency[i] < 12){gbwcs$lat_bin[i] <- 10}
+    if(gbwcs$latency[i] > 13 & gbwcs$latency[i] < 17){gbwcs$lat_bin[i] <- 15}
+    if(gbwcs$latency[i] > 27 & gbwcs$latency[i] < 33){gbwcs$lat_bin[i] <- 30}
+    if(gbwcs$latency[i] > 57 & gbwcs$latency[i] < 63){gbwcs$lat_bin[i] <- 60}
+  }
+
+## summarise to mean and se by group
+    gbwcs_s <- gbwcs %>%
+      group_by(sex, lat_bin) %>%
+      summarise(cort_mu = mean(cort),
+                cort_se = sd(cort, na.rm = TRUE) / sqrt(n()),
+                n = n())
+    
+    p4 <- ggplot(gbwcs_s, mapping = aes(x = lat_bin, y = cort_mu, color = sex, shape = sex)) +
+      geom_line() +
+      geom_point(size = 2) +
+      scale_color_manual(labels = c("Female", "Male"), values = c("coral3", "gray20")) +
+      scale_shape_manual(labels = c("Female", "Male"), values = c(16, 17)) +
+      theme_bw() +
+      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+      xlab("Time after capture (min.)") +
+      ylab("") +
+      theme(legend.title = element_blank(), legend.position = c(0.7, 0.15)) +
+      #coord_cartesian(ylim = c(0, 55)) +
+      geom_errorbar(aes(ymin = cort_mu - cort_se,
+                        ymax = cort_mu + cort_se),
+                    width = 2) +
+      annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "D") +
+      #labs(title = "Gambel's White-crowned Sparrow") +
+      scale_x_continuous(breaks = c(0, 15, 30, 45, 60)) +
+      theme(axis.text = element_text(size = 10), axis.title = element_text(size = 12)) +
+      theme(legend.background = element_rect(fill = "transparent"))
+    
+    
+    #ggpubr::ggarrange(p1, p2, p3, p4, nrow = 1)
+```
+
+```{r compare-data, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3.1, fig.width = 9, fig.cap = "Comparative data from 59 species showing the overall absolute stress response (A), the percentage of maximum corticosterone reached at each sampling point (B), and the percentage of the change from baseline to maximum values reached at each sampling point (C). Each species is represented by a different line."}
+
+# bin latencies into standard bins
+  for(i in 1:nrow(dlf5)){
+    if(dlf5$latency[i] < 3){dlf5$lat_bin[i] <- 1}
+    if(dlf5$latency[i] > 3 & dlf5$latency[i] < 7){dlf5$lat_bin[i] <- 5}
+    if(dlf5$latency[i] > 8 & dlf5$latency[i] < 12){dlf5$lat_bin[i] <- 10}
+    if(dlf5$latency[i] > 12 & dlf5$latency[i] < 18){dlf5$lat_bin[i] <- 15}
+    if(dlf5$latency[i] > 18 & dlf5$latency[i] < 22){dlf5$lat_bin[i] <- 20}
+    if(dlf5$latency[i] > 27 & dlf5$latency[i] < 33){dlf5$lat_bin[i] <- 30}
+    if(dlf5$latency[i] > 57 & dlf5$latency[i] < 63){dlf5$lat_bin[i] <- 60}
+  }
+
+# make the individual data wider
+  dlf5$ind_y_doy <- paste(dlf5$ind_id, dlf5$year, dlf5$doy, dlf5$lat_bin, sep = "_")
+  dlf5 <- dlf5[!duplicated(dlf5$ind_y_doy), ]
+  dlf6 <- dlf5 %>%
+    #group_by(ind_id) %>%
+    pivot_wider(id_cols = c(ind_id, lat, long, alt, t_cap, com_nm, alpha, genus, spp, spp_lat, alpha6,
+                            sex, mass, year, doy), 
+                names_from = lat_bin, values_from = cort, names_prefix = "lat_bin")
+  dlf6 <- as.data.frame(dlf6)
+  
+# Find the maximum for each individual
+  for(i in 1:nrow(dlf6)){
+    maxc <- max(na.omit(t(dlf6[i, c("lat_bin1", "lat_bin5", "lat_bin10", "lat_bin15", "lat_bin20", "lat_bin30", "lat_bin60")])))
+    dlf6$maxc[i] <- maxc
+  }
+  
+# calculate change from base
+  dlf6$response <- dlf6$maxc - dlf6$lat_bin1
+  
+# calculate percentages
+  dlf6$per_bin1 <- dlf6$lat_bin1 / dlf6$maxc
+  dlf6$per_bin5 <- dlf6$lat_bin5 / dlf6$maxc
+  dlf6$per_bin10 <- dlf6$lat_bin10 / dlf6$maxc
+  dlf6$per_bin15 <- dlf6$lat_bin15 / dlf6$maxc
+  dlf6$per_bin20 <- dlf6$lat_bin20 / dlf6$maxc
+  dlf6$per_bin30 <- dlf6$lat_bin30 / dlf6$maxc
+  dlf6$per_bin60 <- dlf6$lat_bin60 / dlf6$maxc
+  
+  dlf6$per_res1 <- (dlf6$lat_bin1 - dlf6$lat_bin1) / dlf6$maxc
+  dlf6$per_res5 <- (dlf6$lat_bin5 - dlf6$lat_bin1) / dlf6$maxc
+  dlf6$per_res10 <- (dlf6$lat_bin10 - dlf6$lat_bin1) / dlf6$maxc
+  dlf6$per_res15 <- (dlf6$lat_bin15 - dlf6$lat_bin1) / dlf6$maxc
+  dlf6$per_res20 <- (dlf6$lat_bin20 - dlf6$lat_bin1) / dlf6$maxc
+  dlf6$per_res30 <- (dlf6$lat_bin30 - dlf6$lat_bin1) / dlf6$maxc
+  dlf6$per_res60 <- (dlf6$lat_bin60 - dlf6$lat_bin1) / dlf6$maxc
+  
+# make longer for absolute increase
+    dl6_long1 <- dlf6 %>%
+      pivot_longer(cols = starts_with("lat_bin"),
+                   names_to = "bin",
+                   values_to = "percent")
+    dl6_long1 <- dl6_long1[, c("ind_id", "alpha", "bin", "percent")]
+    bins <- data.frame(bin = c("lat_bin1", "lat_bin5", "lat_bin10", "lat_bin15", "lat_bin20", "lat_bin30", "lat_bin60"),
+                       time = c(1, 5, 10, 15, 20, 30, 60))
+    dl6_long1 <- plyr::join(dl6_long1, bins, "bin")
+    dl6_long1 <- na.omit(dl6_long1)
+
+    
+    dl6_sum1 <- dl6_long1 %>%
+      group_by(alpha, bin, time) %>%
+      summarise(mean_abs = mean(percent), n = n())
+    
+    p1 <- ggplot(data = subset(dl6_sum1, dl6_sum1$n > 5), mapping = aes(x = time, y = mean_abs, color = alpha)) +
+      geom_line() +
+      guides(color = "none") +
+      scale_color_viridis(discrete = TRUE, option = "A") +
+      theme_bw() +
+      theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+      annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A", size = 6) +
+      coord_cartesian(xlim = c(0, 60)) +
+      xlab("Time after capture (min.)") +
+      scale_x_continuous(breaks = c(0, 15, 30, 45, 60)) +
+      theme(axis.text = element_text(size = 10), axis.title = element_text(size = 12)) +
+      ylab("Corticosterone (ng/ml)")
+  
+# make longer for percentage of maximum  
+    dl6_long <- dlf6 %>%
+      pivot_longer(cols = starts_with("per_bin"),
+                   names_to = "bin",
+                   values_to = "percent")
+    dl6_long <- dl6_long[, c("ind_id", "alpha", "bin", "percent")]
+    bins <- data.frame(bin = c("per_bin1", "per_bin5", "per_bin10", "per_bin15", "per_bin20", "per_bin30", "per_bin60"),
+                       time = c(1, 5, 10, 15, 20, 30, 60))
+    dl6_long <- plyr::join(dl6_long, bins, "bin")
+    dl6_long <- na.omit(dl6_long)
+
+    
+    dl6_sum2 <- dl6_long %>%
+      group_by(alpha, bin, time) %>%
+      summarise(mean_per = mean(percent), n = n())
+    
+    p2 <- ggplot(data = subset(dl6_sum2, dl6_sum2$n > 5), mapping = aes(x = time, y = mean_per, color = alpha)) +
+      geom_line() +
+      guides(color = "none") +
+      scale_color_viridis(discrete = TRUE, option = "E") +
+      theme_bw() +
+      theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+      annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B", size = 6) +
+      coord_cartesian(xlim = c(0, 60), ylim = c(0, 1)) +
+      scale_x_continuous(breaks = c(0, 15, 30, 45, 60)) +
+      theme(axis.text = element_text(size = 10), axis.title = element_text(size = 12)) +
+      xlab("Time after capture (min.)") +
+      ylab("Percent of maximum")
+  
+  
+# make longer for percentage of response
+    dl6_longs <- dlf6 %>%
+      pivot_longer(cols = starts_with("per_res"),
+                   names_to = "bin",
+                   values_to = "percent")
+    dl6_longs <- dl6_longs[, c("ind_id", "alpha", "bin", "percent")]
+        bins2 <- data.frame(bin = c("per_res1", "per_res5", "per_res10", "per_res15", "per_res20", "per_res30", "per_res60"),
+                       time = c(1, 5, 10, 15, 20, 30, 60))
+    dl6_longs <- plyr::join(dl6_longs, bins2, "bin")
+    dl6_longs <- na.omit(dl6_longs)
+
+    
+    dl6_sum3 <- dl6_longs %>%
+      group_by(alpha, bin, time) %>%
+      summarise(mean_per = mean(percent), n = n())
+    
+    p3 <- ggplot(data = subset(dl6_sum3, dl6_sum3$n > 5), mapping = aes(x = time, y = mean_per, color = alpha)) +
+      geom_line() +
+      guides(color = "none") +
+      scale_color_viridis(discrete = TRUE) +
+      theme_bw() +
+      theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
+      annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "C", size = 6) +
+      coord_cartesian(xlim = c(0, 60), ylim = c(0, 1)) +
+      scale_x_continuous(breaks = c(0, 15, 30, 45, 60)) +
+      theme(axis.text = element_text(size = 10), axis.title = element_text(size = 12)) +
+      xlab("Time after capture (min.)") +
+      ylab("Percent of scope")
+      
+    p_all_comp <- ggpubr::ggarrange(p1, p2, p3, nrow = 1)
+
+```
+
+```{r plot-map, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 6, fig.cap = "CUT THIS OUT OR PUT IN SUPPLEMENT. NOT WORTH INCLUDING. Sampling locations for the species included here. A single point is shown for each sampling location. Some species were sampled at multiple locations and are represented by multiple points. In total, 1,750 individuals from 63 species are included."}
+
+## Get map
+  b_map <- ne_countries(type = "countries", returnclass = "sf")
+  p_map <- ggplot() + geom_sf(data = b_map, fill = "gray75") +
+    theme_bw() + ylab("Latitude") + xlab("Longitude")
+  
+# list of unique locations
+  dlf6$latlong <- paste(dlf6$lat, dlf6$long, sep = "_")
+  uni_c <- dlf6[!duplicated(dlf6$latlong), ]
+  uni_c <- subset(uni_c, is.na(uni_c$lat) == FALSE & is.na(uni_c$long) == FALSE)
+  uni_c2 <- st_as_sf(uni_c, coords = c("long", "lat"), crs = st_crs(b_map))
+  p_loc <- ggplot(data = uni_c2) + 
+    geom_sf(data = b_map, fill = "gray85") +
+    theme_bw() +
+    guides(color = "none") +
+    geom_sf(data = uni_c2, mapping = aes(color = alpha), alpha = 0.7, size = 1.2)
+  saveRDS(p_loc, here::here("5_other_outputs", "p_loc.rds"))
+
+```
+
+```{r data-wrap, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 8, fig.width = 8, fig.align = "center", fig.cap = "Data by species. This will not be included, too messy to be useful."}
+    # ggplot(dlf5, mapping = aes(x = latency, y = cort)) +
+    #   geom_point(size = 0.8, alpha = 0.6) +
+    #   theme_bw() +
+    #   geom_smooth(color = "slateblue", se = FALSE, method = "loess", span = 0.85) +
+    #   #geom_smooth(color = "coral3", method = "gam", se = FALSE) +
+    #   facet_wrap(~ alpha, scales = "free_y") +
+    #   xlab("Latency (minutes)") +
+    #   ylab("Corticosterone") +
+    #   coord_cartesian(ylim = c(0, 150)) +
+    #   theme(strip.text.x = element_blank())
+```
+
+```{r add-hb-covars, echo = FALSE, message = FALSE, warning = FALSE}
+# join the hb covariates
+  hbd <- read.delim(here::here("1_raw_data", "hb_covariates.txt"))
+  dlf6$wing_com_nm <- dlf6$com_nm
+  dlf7 <- plyr::join(dlf6, hbd, "wing_com_nm")
+  dlf7$mass <- as.numeric(dlf7$mass)
+  
+  dlf7$delta1t10 <- dlf7$lat_bin10 - dlf7$lat_bin1
+  dlf7$hb_gen_sp <- as.factor(dlf7$hb_gen_sp)
+  
+# join to the long data in the same way
+  dlf5$wing_com_nm <- dlf5$com_nm
+  dlf5b <- plyr::join(dlf5, hbd, "wing_com_nm")
+  dlf5b$mass <- as.numeric(dlf5b$mass)
+  
+  dlf5b$hb_gen_sp <- as.factor(dlf5b$hb_gen_sp)
+```
+
+```{r add-environment, echo = FALSE, message = FALSE, warning = FALSE}
+
+# This saved file has the population ID for each wingfield location to match with records from HormoneBase. Was compiled by calculating distances,
+  # all are less than 15m different from hormonebase populatoin centers.
+    hb_pop_list <- read.delim(here::here("1_raw_data/hb_pop_match.csv"), sep = ",")
+
+
+# Join the population to the filtered wingfield data
+  dlf7$dupcheck <- paste(dlf7$hb_gen_sp, dlf7$lat, dlf7$long, sep = "_")
+  dlf7 <- plyr::join(dlf7, hb_pop_list, "dupcheck")
+  
+# Determine if sample is from fall/winter/spring/summer 
+    dlf7$season <- NA
+    for(i in 1:nrow(dlf7)){
+      if(is.na(dlf7$doy[i]) == FALSE){
+        if(dlf7$doy[i] >= 335 | dlf7$doy[i] <= 59){dlf7$season[i] <- "Winter"}
+        if(dlf7$doy[i] >= 60 & dlf7$doy[i] <= 151){dlf7$season[i] <- "Spring"}
+        if(dlf7$doy[i] >= 152 & dlf7$doy[i] <= 243){dlf7$season[i] <- "Summer"}
+        if(dlf7$doy[i] >= 244 & dlf7$doy[i] <= 334){dlf7$season[i] <- "Fall"}
+      }
+    }
+  
+## Load in HormoneBase environment data and join by population and season
+      hb_env <- read.delim(here::here("1_raw_data", "hb_environment_vars.txt"))
+      hb_env$pop_ssn <- paste(hb_env$pop_id, hb_env$season, sep = "_")
+      
+      dlf7$pop_ssn <- paste(dlf7$hb_pop_id, dlf7$season, sep = "_")
+      dlf7 <- plyr::join(dlf7, hb_env, "pop_ssn", "left", "first")
+      
+# do the same as above for the long data
+      dlf5b$dupcheck <- paste(dlf5b$hb_gen_sp, dlf5b$lat, dlf5b$long, sep = "_")
+      dlf5b <- plyr::join(dlf5b, hb_pop_list, "dupcheck")
+      dlf5b$season <- NA
+    for(i in 1:nrow(dlf5b)){
+      if(is.na(dlf5b$doy[i]) == FALSE){
+        if(dlf5b$doy[i] >= 335 | dlf5b$doy[i] <= 59){dlf5b$season[i] <- "Winter"}
+        if(dlf5b$doy[i] >= 60 & dlf5b$doy[i] <= 151){dlf5b$season[i] <- "Spring"}
+        if(dlf5b$doy[i] >= 152 & dlf5b$doy[i] <= 243){dlf5b$season[i] <- "Summer"}
+        if(dlf5b$doy[i] >= 244 & dlf5b$doy[i] <= 334){dlf5b$season[i] <- "Fall"}
+      }
+    }
+      
+      dlf5b$pop_ssn <- paste(dlf5b$hb_pop_id, dlf5b$season, sep = "_")
+      dlf5b <- plyr::join(dlf5b, hb_env, "pop_ssn", "left", "first")
+
+```
+
+```{r fit-models-individ, echo = FALSE, message = FALSE, warning = FALSE}
+# 
+# # center max, base, response, and mass within species
+#   dg <- dlf7 %>%
+#     as_tibble(.name_repair = "unique") %>%
+#     group_by(hb_gen_sp) %>%
+#     mutate(maxc_gc = as.numeric(scale(maxc)),
+#            mass_gc = as.numeric(scale(mass)),
+#            base_gc = as.numeric(scale(lat_bin1)),
+#            resp_gc = as.numeric(scale(response))) %>%
+#     as.data.frame()
+#   
+# ## First fit models at the level of individual observations. These are fit with values centered within each species.  
+# 
+#       dgmp <- dg[, c("per_bin10", "maxc_gc", "hb_gen_sp", "base_gc", "per_res10", "delta1t10")]
+#       dgmp <- na.omit(dgmp)
+#         # Models for the percentage of the maximum cort value
+#             mp1 <- lmer(per_bin10 ~ maxc_gc + (1|hb_gen_sp), data = dg, na.action = na.omit)
+#             mp2 <- lmer(per_bin10 ~ base_gc + maxc_gc + (1|hb_gen_sp), data = dgmp, na.action = na.omit)
+#             mp3 <- lmer(per_bin10 ~ base_gc + maxc_gc + mass_gc + (1|hb_gen_sp), data = dgmp, na.action = na.omit)
+#             # tab_model(mp1, mp2, mp3,
+#             #           pred.labels = c("Intercept", "Maximum Cort (species centered)", "Baseline Cort (species centered)", "Mass (species centered)"),
+#             #           dv.labels = c(rep("Percent of Maximum at 10 Minutes", 3)),
+#             #           show.re.var = FALSE,
+#             #           show.ngroups = FALSE)
+#          
+#         # Plot illustrating this model set    
+#            p_mp3 <-  ggplot(data = dg, mapping = aes(x = base_gc, y = per_bin10)) +
+#               geom_point(alpha = 0.6, color = "slateblue") + 
+#               #geom_line(stat = "smooth", method = "lm", mapping = aes(by = hb_gen_sp), se = FALSE, color = "gray30", alpha = 0.7, size = 0.8) +
+#               geom_smooth(method = "lm", color = "coral3", fill = "coral3", alpha = 0.5) +
+#               theme_bw() +
+#               theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#                     axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#               xlab("Maximum corticosterone (SD centered within species)") +
+#               ylab("Percentage of maximum after 10 minutes")
+#         
+#         # Models for the percentage of the response  
+#           mr1 <- lmer(per_res10 ~ resp_gc + (1|hb_gen_sp), data = dg, na.action = na.omit)
+#           mr2 <- lmer(per_res10 ~ mass_gc + resp_gc + (1|hb_gen_sp), data = dg, na.action = na.omit)
+#           mr3 <- lmer(per_res10 ~ base_gc + maxc_gc + mass_gc + (1|hb_gen_sp), data = dg, na.action = na.omit)
+#           # tab_model(mr1, mr2,
+#           #           pred.labels = c("Intercept", "Cort Response (species centered)", "Mass (species centered)"),
+#           #           dv.labels = rep("Percent of Response at 10 Minutes", 2),
+#           #           show.re.var = FALSE,
+#           #           show.ngroups = FALSE)
+#           
+#             p_mr3 <- ggplot(data = dg, mapping = aes(x = resp_gc, y = per_res10)) +
+#             geom_point(alpha = 0.6, color = "slateblue") + 
+#             geom_line(stat = "smooth", method = "lm", mapping = aes(by = hb_gen_sp), se = FALSE, color = "gray30", alpha = 0.7, size = 0.8) +
+#             geom_smooth(method = "lm", color = "coral3", fill = "coral3", alpha = 0.5) +
+#             theme_bw() +
+#             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#                   axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#             xlab("Magnitude of response (SD centered within species)") +
+#             ylab("Percentage of response after 10 minutes")
+#           
+#         # Models for the absolute increase from baseline to 10 minutes    
+#           ma1 <- lmer(delta1t10 ~ maxc_gc + (1|hb_gen_sp), data = dg, na.action = na.omit)
+#           ma2 <- lmer(delta1t10 ~ base_gc + (1|hb_gen_sp), data = dg, na.action = na.omit)
+#           ma3 <- lmer(delta1t10 ~ maxc_gc + base_gc + mass_gc + (1|hb_gen_sp), data = dgmp, na.action = na.omit)
+#           # tab_model(ma1, ma2, ma3,
+#           #           pred.labels = c("Intercept", "Maximum Cort (species centered)", "Baseline Cort (species centered)", "Mass (species centered)"),
+#           #           dv.labels = rep("Absolute Increase Baseline to 10 minutes", 3),
+#           #           show.re.var = FALSE,
+#           #           show.ngroups = FALSE)
+#   
+#             p_ma3 <- ggplot(data = dg, mapping = aes(x = maxc_gc, y = delta1t10)) +
+#             geom_point(alpha = 0.6, color = "slateblue") + 
+#             #geom_line(stat = "smooth", method = "lm", mapping = aes(by = hb_gen_sp), se = FALSE, color = "gray30", alpha = 0.7, size = 0.8) +
+#             geom_smooth(method = "lm", color = "coral3", fill = "coral3", alpha = 0.5) +
+#             theme_bw() +
+#             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#                   axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#             xlab("Magnitude of response (SD centered within species)") +
+#             ylab("Increase in first 10 minutes")   +
+#               coord_cartesian(ylim = c(-30, 80))
+#             
+#         # Full model from each
+#             within_tab <- tab_model(mp3, mr3, ma3,
+#                       pred.labels = c("Intercept", "Baseline Cort (species centered)", "Maximum Cort (species centered)", "Mass (species centered)"),
+#                       dv.labels = c("Percent of Maximum at 10 Minutes", "Percent of Response at 10 Minutes", "Cort Increase Base to 10 Minutes"),
+#                       show.re.var = FALSE,
+#                       show.ngroups = FALSE, 
+#                       show.icc = FALSE)
+
+```
+
+```{r sum-to-sp, echo = FALSE, message = FALSE, warning = FALSE}
+# This chunk is summarizing the full dataset down to species level (one row per species)
+
+# calculate brood value as in Vitousek et al 2019 ----
+  for(i in 1:nrow(dlf7)){
+    mats <- na.omit(c(dlf7$ft_matur[i], dlf7$mt_matur[i]))
+    dlf7$mature[i] <- mean(mats) / 365
+  }
+  dlf7$rep_val <- (dlf7$avg_long - dlf7$mature) * dlf7$clutch_year
+  dlf7$rep_val_i <- (dlf7$av_long_i - dlf7$mature) * dlf7$clutch_year
+  
+  # same for the long data
+      for(i in 1:nrow(dlf5b)){
+          mats <- na.omit(c(dlf5b$ft_matur[i], dlf5b$mt_matur[i]))
+          dlf5b$mature[i] <- mean(mats) / 365
+        }
+        dlf5b$rep_val <- (dlf5b$avg_long - dlf5b$mature) * dlf5b$clutch_year
+        dlf5b$rep_val_i <- (dlf5b$av_long_i - dlf5b$mature) * dlf5b$clutch_year
+
+# summarise to species for data frame with one row per species
+  dlf8a <- dlf7[, c("hb_gen_sp", "per_bin10", "per_res10", "maxc", "response", "mr", "mass", "delta1t10", "avg_long", "lat_bin1", "lat",
+                   "mr_infer", "avg_long", "av_long_i", "per_res5", "per_bin5", "per_bin5", "per_res5", "long",
+                   "btree_match", "temp", "temp_inter_sd", "temp_intra_sd", "prec", "prec_inter_sd", "prec_intra_sd",
+                   "rep_val", "rep_val_i")]
+  dlf8 <- dlf8a %>%
+    group_by(hb_gen_sp) %>%
+    summarise(pb10 = mean(per_bin10, na.rm = TRUE), pr10 = mean(per_res10, na.rm = TRUE), max = mean(maxc, na.rm = TRUE), longitude = mean(long, na.rm = TRUE),
+              n = n(), resp = mean(response, na.rm = TRUE), mr = mean(mr, na.rm = TRUE), mass = mean(mass, na.rm = TRUE),
+              d10 = mean(delta1t10, na.rm = TRUE), long = mean(avg_long, na.rm = TRUE), base = mean(lat_bin1, na.rm = TRUE),
+              lat = mean(lat, na.rm = TRUE), mri = mean(mr_infer, na.rm = TRUE),
+              avli = mean(av_long_i, na.rm = TRUE), pb5 = mean(per_bin5, na.rm = TRUE), pr5 = mean(per_bin5, na.rm = TRUE),
+              temp = mean(temp, na.rm = TRUE), temp_inter_sd = mean(temp_inter_sd, na.rm = TRUE),
+              temp_intra_sd = mean(temp_intra_sd, na.rm = TRUE), prec = mean(prec, na.rm = TRUE),
+              prec_inter_sd = mean(prec_inter_sd), prec_intra_sd = mean(prec_intra_sd, na.rm = TRUE),
+              pr5 = mean(per_res5, na.rm = TRUE), pb5 = mean(per_bin5, na.rm = TRUE),
+              rval = mean(rep_val, na.rm = TRUE), rvi = mean(rep_val_i, na.rm = TRUE))
+  
+# add in the column needed to make species names match the phylogeny  
+  dlf8 <- plyr::join(dlf8, dlf7[, c("hb_gen_sp", "btree_match")], "hb_gen_sp", type = "left", match = "first")
+  dlf8$btree <- gsub(" ", "_", dlf8$btree_match)
+
+
+ 
+## Same as above but for breeding records only ----  
+  # read in breeding stage by date for each species and wrangle into matching format
+    bstg <- read.delim(here::here("1_raw_data", "breed_stages.txt"))
+    bstg2 <- bstg %>%
+      pivot_longer(cols = c("dec_feb", "mar_may", "jun_aug", "sep_nov"), names_to = "mnth_rng", values_to = "brdg_stg")
+    mn_to_ssn <- data.frame(mnth_rng = c("dec_feb", "mar_may", "jun_aug", "sep_nov"), 
+                            season = c("Winter", "Spring", "Summer", "Fall"))
+    bstg2 <- plyr::join(bstg2, mn_to_ssn, "mnth_rng", "left")
+    bstg2$sp_stg <- paste(bstg2$species, bstg2$season, sep = " ")
+    bstg3 <- bstg2[, c("sp_stg", "brdg_stg")]
+    
+  # Prepare matching column in the data  
+    dlf7_b <- dlf7
+    dlf7_b$sp_stg <- paste(dlf7_b$hb_gen_sp, dlf7_b$season, sep = " ")  
+    dlf7_b <- plyr::join(dlf7_b, bstg3, "sp_stg")
+    dlf7_bb <- subset(dlf7_b, dlf7_b$brdg_stg == "breed")
+    
+  # repeat collapsing to species as above but using the breeding records only
+      dlf8a_b <- dlf7_bb[, c("hb_gen_sp", "per_bin10", "per_res10", "maxc", "response", "mr", "mass", "delta1t10", "avg_long", "lat_bin1", "lat",
+                   "mr_infer", "avg_long", "av_long_i", "per_res5", "per_bin5", "per_bin5", "per_res5", "long",
+                   "btree_match", "temp", "temp_inter_sd", "temp_intra_sd", "prec", "prec_inter_sd", "prec_intra_sd",
+                   "rep_val", "rep_val_i")]
+  dlf8_b <- dlf8a_b %>%
+    group_by(hb_gen_sp) %>%
+    summarise(pb10 = mean(per_bin10, na.rm = TRUE), pr10 = mean(per_res10, na.rm = TRUE), max = mean(maxc, na.rm = TRUE), longitude = mean(long, na.rm = TRUE),
+              n = n(), resp = mean(response, na.rm = TRUE), mr = mean(mr, na.rm = TRUE), mass = mean(mass, na.rm = TRUE),
+              d10 = mean(delta1t10, na.rm = TRUE), long = mean(avg_long, na.rm = TRUE), base = mean(lat_bin1, na.rm = TRUE),
+              lat = mean(lat, na.rm = TRUE), mri = mean(mr_infer, na.rm = TRUE),
+              avli = mean(av_long_i, na.rm = TRUE), pb5 = mean(per_bin5, na.rm = TRUE), pr5 = mean(per_bin5, na.rm = TRUE),
+              temp = mean(temp, na.rm = TRUE), temp_inter_sd = mean(temp_inter_sd, na.rm = TRUE),
+              temp_intra_sd = mean(temp_intra_sd, na.rm = TRUE), prec = mean(prec, na.rm = TRUE),
+              prec_inter_sd = mean(prec_inter_sd), prec_intra_sd = mean(prec_intra_sd, na.rm = TRUE),
+              pr5 = mean(per_res5, na.rm = TRUE), pb5 = mean(per_bin5, na.rm = TRUE),
+              rval = mean(rep_val, na.rm = TRUE), rvi = mean(rep_val_i, na.rm = TRUE))
+  
+    # add in the column needed to make species names match the phylogeny  
+      dlf8_b <- plyr::join(dlf8_b, dlf7[, c("hb_gen_sp", "btree_match")], "hb_gen_sp", type = "left", match = "first")
+      dlf8_b$btree <- gsub(" ", "_", dlf8_b$btree_match)
+      dlf8_b <- subset(dlf8_b, dlf8_b$n > 4)
+      
+    
+```
+
+```{r ind-lev-mods, echo = FALSE, warning = FALSE, message = FALSE}
+## Fit models at the species level ----
+
+## THis is an older attempt. not using this approach anymore.
+  # Models for the percentage of total reached
+  #             #ms1 <- lm(pb10 ~ scale(max), data = dlf8, na.action = na.omit)
+  #             ms2 <- lm(pb10 ~ scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms3 <- lm(pb10 ~ scale(abs(lat)) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms4 <- lm(pb10 ~ scale(log(mass)) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms5 <- lm(pb10 ~ scale(long) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms5b <- lm(pb10 ~ scale(avli) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms6 <- lm(pb10 ~ scale(mr) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms6b <- lm(pb10 ~ scale(mri) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms8 <- lm(pb10 ~ scale(temp_intra_sd) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms9 <- lm(pb10 ~ scale(prec_intra_sd) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #             ms_mods <- tab_model(ms2, ms3, ms4, ms5, ms5b, ms6, ms6b, ms7, ms8, ms9,
+  #                       pred.labels = c("Intercept", "Maximum Cort", "Baseline Cort", "Latitude (absolute)",
+  #                                       "Mass", "Average Longevity", "Average Longevity (imputed)",
+  #                                       "Metabolic Rate", "Metabolic Rate (imputed)", 
+  #                                       "Intra-Year Temperature Variability", "Intra-Year Precipitation Variability"),
+  #                       dv.labels = rep("Percent of Maximum at 10 Minutes", 10),
+  #                       show.re.var = FALSE,
+  #                       show.ngroups = FALSE)
+  #         
+  #         psA <- ggplot(data = dlf8, mapping = aes(x = avli, y = pb10)) +
+  #           geom_point(shape = 1) + 
+  #           geom_smooth(method = "lm", fill = "coral3", color = "black", linetype = "dashed") +
+  #           geom_smooth(method = "lm", se = FALSE, color = "black", mapping = aes(x = long)) +
+  #           geom_point(mapping = aes(x = long)) + 
+  #           theme_bw() +
+  #           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #                 axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #           xlab("Average lifespan (years)") +
+  #           ylab("Percentage of maximum after 10 minutes")
+  #         
+  #         psB <- ggplot(data = dlf8, mapping = aes(x = abs(lat), y = pb10)) +
+  #           geom_point() + 
+  #           geom_smooth(method = "lm", fill = "coral3", color = "black") +
+  #           theme_bw() +
+  #           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #                 axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #           xlab("Absolute latitude") +
+  #           ylab("Percentage of maximum after 10 minutes")
+  #         
+  #         psC <- ggplot(data = dlf8, mapping = aes(x = log(mass), y = pb10)) +
+  #           geom_point() + 
+  #           geom_smooth(method = "lm", fill = "coral3", color = "black") +
+  #           theme_bw() +
+  #           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #                 axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #           xlab("Mass (log grams)") +
+  #           ylab("Percentage of maximum after 10 minutes")
+  #         
+  #         psD <- ggplot(data = dlf8, mapping = aes(x = temp_intra_sd, y = pb10)) +
+  #           geom_point() + 
+  #           geom_smooth(method = "lm", fill = "coral3", color = "black") +
+  #           theme_bw() +
+  #           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #                 axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #           xlab("Within year temperature variability (SD)") +
+  #           ylab("Percentage of maximum after 10 minutes")
+  #         
+  #         #ggpubr::ggarrange(psA, psB, psC, psD, nrow = 2, ncol = 2)
+  # 
+  # 
+  # # models for the percentage of the response reached 
+  #     msr1 <- lm(pr10 ~ scale(resp), data = dlf8, na.action = na.omit)
+  #     msr3 <- lm(pr10 ~ scale(abs(lat)) + scale(resp), data = dlf8, na.action = na.omit)
+  #     msr4 <- lm(pr10 ~ scale(log(mass)) + scale(resp), data = dlf8, na.action = na.omit)
+  #     msr5 <- lm(pr10 ~ scale(long) + scale(resp), data = dlf8, na.action = na.omit)
+  #     msr5b <- lm(pr10 ~ scale(avli) + scale(resp), data = dlf8, na.action = na.omit)
+  #     msr6 <- lm(pr10 ~ scale(mr) + scale(resp), data = dlf8, na.action = na.omit)
+  #     msr6b <- lm(pr10 ~ scale(mri) + scale(resp), data = dlf8, na.action = na.omit)
+  #     msr7 <- lm(pr10 ~ scale(temp_intra_sd) + scale(resp), data = dlf8, na.action = na.omit)
+  #     msr8 <- lm(pr10 ~ scale(prec_intra_sd) + scale(resp), data = dlf8, na.action = na.omit)
+  #     msr_mods <- tab_model(msr1, msr3, msr4, msr5, msr5b, msr6, msr6b, msr7, msr8,
+  #         pred.labels = c("Intercept", "Cort Response", "Latitude (absolute)",
+  #                                       "Mass", "Average Longevity", "Average Longevity (imputed)",
+  #                                       "Metabolic Rate", "Metabolic Rate (imputed)", 
+  #                                       "Intra-Year Temperature Variability", "Intra-Year Precipitation Variability"),
+  #                       dv.labels = rep("Percent of Response at 10 Minutes", 10),
+  #                       show.re.var = FALSE,
+  #                       show.ngroups = FALSE)
+  #         
+  #         prA <- ggplot(data = dlf8, mapping = aes(x = avli, y = pr10)) +
+  #           geom_point(shape = 1) + 
+  #           geom_smooth(method = "lm", fill = "coral3", color = "black", linetype = "dashed") +
+  #           geom_smooth(method = "lm", se = FALSE, color = "black", mapping = aes(x = long)) +
+  #           geom_point(mapping = aes(x = long)) + 
+  #           theme_bw() +
+  #           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #                 axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #           xlab("Average lifespan (years)") +
+  #           ylab("Percentage of response after 10 minutes")
+  #         
+  #         prB <- ggplot(data = dlf8, mapping = aes(x = log(mass), y = pr10)) +
+  #           geom_point() + 
+  #           geom_smooth(method = "lm", fill = "coral3", color = "black") +
+  #           theme_bw() +
+  #           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #                 axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #           xlab("Mass (log grams)") +
+  #           ylab("Percentage of response after 10 minutes")
+  #         
+  #         prC <- ggplot(data = dlf8, mapping = aes(x = temp_intra_sd, y = pr10)) +
+  #           geom_point() + 
+  #           geom_smooth(method = "lm", fill = "coral3", color = "black") +
+  #           theme_bw() +
+  #           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #                 axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #           xlab("Within year temperature variability (SD)") +
+  #           ylab("Percentage of response after 10 minutes")
+  #         
+  #         #ggpubr::ggarrange(prA, prB, prC, nrow = 1)
+  # 
+  # 
+  # # Models for the absolute increase from baseline to 10 minutes
+  #     #msd1 <- lm(d10 ~ scale(max), data = dlf8, na.action = na.omit)
+  #     msd2 <- lm(d10 ~ scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd3 <- lm(d10 ~ scale(abs(lat)) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd4 <- lm(d10 ~ scale(log(mass)) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd5 <- lm(d10 ~ scale(long) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd5b <- lm(d10 ~ scale(avli) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd6 <- lm(d10 ~ scale(mr) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd6b <- lm(d10 ~ scale(mri) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd7 <- lm(d10 ~ scale(temp_intra_sd) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd8 <- lm(d10 ~ scale(prec_intra_sd) + scale(max) + scale(base), data = dlf8, na.action = na.omit)
+  #     msd_mods <- tab_model(msd2, msd3, msd4, msd5, msd5b, msd6, msd6b, msd7, msd8,
+  #               pred.labels = c("Intercept", "Maximum Cort", "Baseline Cort", "Latitude (absolute value)", "Mass (log)",
+  #                               "Average Lifespan", "Average Lifespan (imputed)", "Metabolic Rate", "Metabolic Rate (imputed)",
+  #                               "Intra-Year Temperature Variability", "Intra-Year Precipitation Variability"),
+  #               dv.labels = rep("Cort Increase from Base to 10 minutes", 9),
+  #               show.re.var = FALSE,
+  #               show.ngroups = FALSE)
+  # 
+  #       pdA <- ggplot(data = dlf8, mapping = aes(x = avli, y = d10)) +
+  #         geom_point(shape = 1) + 
+  #         geom_smooth(method = "lm", fill = "coral3", color = "black", linetype = "dashed") +
+  #         geom_smooth(method = "lm", se = FALSE, color = "black", mapping = aes(x = long)) +
+  #         geom_point(mapping = aes(x = long)) + 
+  #         theme_bw() +
+  #         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #               axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #         xlab("Average lifespan (years)") +
+  #         ylab("Increase in first 10 minutes")
+  #       
+  #       pdB <- ggplot(data = dlf8, mapping = aes(x = abs(lat), y = d10)) +
+  #         geom_point() + 
+  #         geom_smooth(method = "lm", fill = "coral3", color = "black") +
+  #         theme_bw() +
+  #         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  #               axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+  #         xlab("Absolute latitude") +
+  #         ylab("Increase in first 10 minutes")
+  #       
+  #       #ggpubr::ggarrange(pdA, pdB)
+```
+
+```{r mcmc-model-setup, echo = FALSE, warning = FALSE, message = FALSE}
+
+# Set up for mcmcglmm models ----
+    phylo <- read.nexus(here::here("1_raw_data", "bird_trees", "output.nex"))     # tree download from teh bird tree website
+    phy1 <- phylo[[1]]    # Running with the first tree. I downloaded 100, could loop through and run more if needed.
+    inv.phy1 <- inverseA(phy1, nodes = "TIPS", scale = TRUE)
+    
+    dlf9 <- subset(dlf8, is.na(dlf8$btree) == FALSE & dlf8$btree != "")
+    dlf9$btree <- gsub(" ", "_", dlf9$btree)
+    
+    dlf5b2 <- subset(dlf5b, is.na(dlf5b$btree) == FALSE & dlf5b$btree != "")
+    dlf5b2$btree <- gsub(" ", "_", dlf5b2$btree)
+    
+    # for breeding only
+        dlf9_b <- subset(dlf8_b, is.na(dlf8_b$btree) == FALSE & dlf8_b$btree != "")
+        dlf9_b$btree <- gsub(" ", "_", dlf9_b$btree)
+    
+# Prior copied from mcmcglmm tutorials, supposed to be mostly uninformative
+    prior <- list(G = list(G1 = list(V = 1, nu = 0.02)), R = list(V = 1, nu = 0.02))
+    
+    dlf9$btree <- as.factor(dlf9$btree)
+    dlf9 <- as.data.frame(dlf9)
+    
+    # for breeding only
+      dlf9_b$btree <- as.factor(dlf9_b$btree)
+      dlf9_b <- as.data.frame(dlf9_b)
+    
+# # How many iterations, burnin, and thin
+    nitts <- 1e6
+    burnins <- 5e4
+    thins <- 200
+# 
+```
+
+```{r mcmc-per-max, echo = FALSE, message = FALSE, warning = FALSE}
+# ## Percent of maximum models ----
+# 
+#     # msd1. remove any rows with na values for these predictors then fit model
+#         ms1_nona <- dlf9[, c("d10", "pb10", "resp", "base", "btree")]
+#         ms1_nona <- na.omit(ms1_nona)
+#         ms1_mc <- MCMCglmm(pb10 ~ + scale(resp), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = ms1_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         ms1_lam <- ms1_mc$VCV[, 'btree'] / (ms2_mc$VCV[, 'btree'] + ms2_mc$VCV[, 'units'])
+#         ms1_hp <- HPDinterval(ms1_lam)
+#         ms1_mu <- mean(ms1_lam)
+#         
+#         
+#     # ms2. remove any rows with na values for these predictors then fit model          
+#         ms2_nona <- dlf9[, c("pb10", "pr10", "max", "base", "btree")]
+#         ms2_nona <- na.omit(ms2_nona)
+#         ms2_mc <- MCMCglmm(pb10 ~ + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = ms2_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         ms2_lam <- ms2_mc$VCV[, 'btree'] / (ms2_mc$VCV[, 'btree'] + ms2_mc$VCV[, 'units'])
+#         ms2_hp <- HPDinterval(ms2_lam)    
+#         ms2_mu <- mean(ms2_lam)
+
+    # # ms1. remove any rows with na values for these predictors then fit model
+    #     ms1_nona <- dlf9[, c("pb10", "pr10", "resp", "base", "btree")]
+    #     ms1_nona <- na.omit(ms1_nona)
+    #     ms1_mc <- MCMCglmm(pb10 ~ + scale(resp), random = ~ btree,
+    #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+    #                    data = ms1_nona, nitt = nitts, burnin = burnins, thin = thins)
+    #     ms1_lam <- ms1_mc$VCV[, 'btree'] / (ms1_mc$VCV[, 'btree'] + ms1_mc$VCV[, 'units'])
+    #     ms1_hp <- HPDinterval(ms1_lam)
+    #     ms1_mu <- mean(ms1_lam)
+#     
+    # # ms3. remove any rows with na values for these predictors then fit model
+    #     ms3_nona <- dlf9[, c("pb10", "pr10", "lat", "max", "base", "btree")]
+    #     ms3_nona <- na.omit(ms3_nona)
+    #     ms3_mc <- MCMCglmm(pb10 ~ scale(abs(lat)) + scale(max) + scale(base), random = ~ btree,
+    #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+    #                    data = ms3_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         ms3_lam <- ms3_mc$VCV[, 'btree'] / (ms3_mc$VCV[, 'btree'] + ms3_mc$VCV[, 'units'])
+#         ms3_hp <- HPDinterval(ms3_lam)
+#         ms3_mu <- mean(ms3_lam)
+#       # make a line and interval for plotting
+#         r <- seq(from = min(scale(abs(ms3_nona$lat))), to = max(scale(abs(ms3_nona$lat))), length.out = 200)
+#         post <- t(fixef(ms3_mc))
+#         mu_ms3 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_ms3 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(abs(ms3_nona$lat)) + mean(abs(ms3_nona$lat))
+#         mu_ms3d <- data.frame(lat = r2, pb10 = mu_ms3)
+#         ci_ms3d <- data.frame(lat = r2, ymin = t(ci_ms3)[, 1], ymax = t(ci_ms3)[, 2])
+#       # make the plot
+#         p_ms3 <- ggplot(data = ms3_nona, mapping = aes(x = abs(lat), y = pb10)) +
+#             geom_ribbon(data = ci_ms3d, inherit.aes = FALSE, mapping = aes(x = abs(lat), 
+#                       ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#             geom_line(data = mu_ms3d, color = "coral3", size = 1.1) +
+#             theme_bw() +
+#             geom_point() +
+#             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#                   axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#             annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "A") +
+#             xlab("Absolute latitude") +
+#             ylab("Percentage of maximum \n after 10 minutes")
+#             
+#         
+#     # ms4. remove any rows with na values for these predictors then fit model          
+#         ms4_nona <- dlf9[, c("pb10", "pr10", "mass", "max", "base", "btree")]
+#         ms4_nona <- na.omit(ms4_nona)
+#         ms4_mc <- MCMCglmm(pb10 ~ scale(log(mass)) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = ms4_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         ms4_lam <- ms4_mc$VCV[, 'btree'] / (ms4_mc$VCV[, 'btree'] + ms4_mc$VCV[, 'units'])
+#         ms4_hp <- HPDinterval(ms4_lam)
+#         ms4_mu <- mean(ms4_lam)
+#         
+#     # ms5. remove any rows with na values for these predictors then fit model          
+#         ms5_nona <- dlf9[, c("pb10", "pr10", "long", "max", "base", "btree")]
+#         ms5_nona <- na.omit(ms5_nona)
+#         ms5_mc <- MCMCglmm(pb10 ~ scale(long) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = ms5_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         ms5_lam <- ms5_mc$VCV[, 'btree'] / (ms5_mc$VCV[, 'btree'] + ms5_mc$VCV[, 'units'])
+#         ms5_hp <- HPDinterval(ms5_lam)
+#         ms5_mu <- mean(ms5_lam)
+#       # make a line and interval for plotting
+#         r <- seq(from = min(scale(ms5_nona$long)), to = max(scale(ms5_nona$long)), length.out = 200)
+#         post <- t(fixef(ms5_mc))
+#         mu_ms5 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_ms5 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(ms5_nona$long) + mean(ms5_nona$long)
+#         mu_ms5d <- data.frame(long = r2, pb10 = mu_ms5)
+#         ci_ms5d <- data.frame(long = r2, ymin = t(ci_ms5)[, 1], ymax = t(ci_ms5)[, 2])
+#         
+#     # ms5b. remove any rows with na values for these predictors then fit model          
+#         ms5b_nona <- dlf9[, c("pb10", "pr10", "avli", "max", "base", "btree")]
+#         ms5b_nona <- na.omit(ms5b_nona)
+#         ms5b_mc <- MCMCglmm(pb10 ~ scale(avli) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = ms5b_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         ms5b_lam <- ms5b_mc$VCV[, 'btree'] / (ms5b_mc$VCV[, 'btree'] + ms5b_mc$VCV[, 'units'])
+#         ms5b_hp <- HPDinterval(ms5b_lam)
+#         ms5b_mu <- mean(ms5b_lam)
+#       # make a line and interval for plotting
+#         r <- seq(from = min(scale(ms5b_nona$avli)), to = max(scale(ms5b_nona$avli)), length.out = 200)
+#         post <- t(fixef(ms5b_mc))
+#         mu_ms5b <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_ms5b <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(ms5b_nona$avli) + mean(ms5b_nona$avli)
+#         mu_ms5bd <- data.frame(avli = r2, pb10 = mu_ms5b)
+#         ci_ms5bd <- data.frame(avli = r2, ymin = t(ci_ms5b)[, 1], ymax = t(ci_ms5b)[, 2])
+#       # make the plot
+#         p_ms5b <- ggplot(data = ms5b_nona, mapping = aes(x = avli, y = pb10)) +
+#             geom_line(data = mu_ms5d, color = "black", mapping = aes(x = long, y = pb10), size = 1.1) +
+#             geom_ribbon(data = ci_ms5bd, inherit.aes = FALSE, mapping = aes(x = avli, 
+#                       ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#             geom_line(data = mu_ms5bd, color = "coral3", size = 1.1, linetype = "dashed") +
+#             theme_bw() +
+#             geom_point(alpha = 0.7, shape = 1) +
+#             geom_point(data = ms5_nona, mapping = aes(x = long, y = pb10)) +
+#             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#                   axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#             annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "B") +
+#             xlab("Average lifespan") +
+#             ylab("Percentage of maximum \n after 10 minutes")  
+#         
+#         
+    # # ms6. remove any rows with na values for these predictors then fit model
+    #     ms6_nona <- dlf9[, c("pb10", "pr10", "mass", "mr", "max", "base", "btree")]
+    #     ms6_nona <- na.omit(ms6_nona)
+    #     ms6_mc <- MCMCglmm(pb10 ~ scale(mr) + scale(log(mass)) + scale(max) + scale(base), random = ~ btree,
+    #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+    #                    data = ms6_nona, nitt = nitts, burnin = burnins, thin = thins)
+    #     ms6_lam <- ms6_mc$VCV[, 'btree'] / (ms6_mc$VCV[, 'btree'] + ms6_mc$VCV[, 'units'])
+    #     ms6_hp <- HPDinterval(ms6_lam)
+    #     ms6_mu <- mean(ms6_lam)
+    # 
+    # ms7. remove any rows with na values for these predictors then fit model
+        # ms7_nona <- dlf9[, c("pb10", "pr10", "mri", "mass", "max", "base", "btree")]
+        # ms7_nona <- na.omit(ms7_nona)
+        # ms7_mc <- MCMCglmm(pb10 ~ scale(mri) + scale(log(mass)) + scale(max) + scale(base), random = ~ btree,
+        #                family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+        #                data = ms7_nona, nitt = nitts, burnin = burnins, thin = thins)
+        # ms7_lam <- ms7_mc$VCV[, 'btree'] / (ms7_mc$VCV[, 'btree'] + ms7_mc$VCV[, 'units'])
+        # ms7_hp <- HPDinterval(ms7_lam)
+        # ms7_mu <- mean(ms7_lam)
+#         
+#     # ms8. remove any rows with na values for these predictors then fit model          
+#         ms8_nona <- dlf9[, c("pb10", "pr10", "temp_intra_sd", "max", "base", "btree")]
+#         ms8_nona <- na.omit(ms8_nona)
+#         ms8_mc <- MCMCglmm(pb10 ~ scale(temp_intra_sd) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = ms8_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         ms8_lam <- ms8_mc$VCV[, 'btree'] / (ms8_mc$VCV[, 'btree'] + ms8_mc$VCV[, 'units'])
+#         ms8_hp <- HPDinterval(ms8_lam)
+#         ms8_mu <- mean(ms8_lam)
+#     # make a line and interval for plotting
+#         r <- seq(from = min(scale(ms8_nona$temp_intra_sd)), to = max(scale(ms8_nona$temp_intra_sd)), length.out = 200)
+#         post <- t(fixef(ms8_mc))
+#         mu_ms8 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_ms8 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(ms8_nona$temp_intra_sd) + mean(ms8_nona$temp_intra_sd)
+#         mu_ms8d <- data.frame(temp_intra_sd = r2, pb10 = mu_ms8)
+#         ci_ms8d <- data.frame(temp_intra_sd = r2, ymin = t(ci_ms8)[, 1], ymax = t(ci_ms8)[, 2])
+#     # make the plot
+#         p_ms8 <- ggplot(data = ms8_nona, mapping = aes(x = temp_intra_sd, y = pb10)) +
+#             geom_ribbon(data = ci_ms8d, inherit.aes = FALSE, mapping = aes(x = temp_intra_sd, 
+#                       ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#             geom_line(data = mu_ms8d, color = "coral3", size = 1.1) +
+#             theme_bw() +
+#             geom_point() +
+#             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#                   axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#             annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "C") +
+#             xlab("Temperature Variation (SD)") +
+#             ylab("Percentage of maximum \n after 10 minutes")
+#         
+#         p_ms <- ggpubr::ggarrange(p_ms3, p_ms5b, p_ms8, nrow = 1)
+#         
+#       # ms9. remove any rows with na values for these predictors then fit model          
+#         ms9_nona <- dlf9[, c("pb10", "pr10", "prec_intra_sd", "max", "base", "btree")]
+#         ms9_nona <- na.omit(ms9_nona)
+#         ms9_mc <- MCMCglmm(pb10 ~ scale(prec_intra_sd) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = ms9_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         ms9_lam <- ms9_mc$VCV[, 'btree'] / (ms9_mc$VCV[, 'btree'] + ms9_mc$VCV[, 'units'])
+#         ms9_hp <- HPDinterval(ms9_lam)
+#         ms9_mu <- mean(ms9_lam)
+    
+      # # ms10. remove any rows with na values for these predictors then fit model
+      #   ms10_nona <- dlf9_b[, c("pb10", "pr10", "rval", "max", "base", "btree")]
+      #   ms10_nona <- na.omit(ms10_nona)
+      #   ms10_mc <- MCMCglmm(pb10 ~ scale(rval) + scale(max) + scale(base), random = ~ btree,
+      #                  family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+      #                  data = ms10_nona, nitt = nitts, burnin = burnins, thin = thins)
+      #   ms10_lam <- ms10_mc$VCV[, 'btree'] / (ms10_mc$VCV[, 'btree'] + ms10_mc$VCV[, 'units'])
+      #   ms10_hp <- HPDinterval(ms10_lam)
+      #   ms10_mu <- mean(ms10_lam)
+      #   
+      #   # make a line and interval for plotting
+      #     r <- seq(from = min(scale(ms10_nona$rval)), to = max(scale(ms10_nona$rval)), length.out = 200)
+      #     post <- t(fixef(ms10_mc))
+      #     mu_ms10 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+      #     ci_ms10 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+      #     r2 <- r * sd(ms10_nona$rval) + mean(ms10_nona$rval)
+      #     mu_ms10d <- data.frame(rval = r2, pb10 = mu_ms10)
+      #     ci_ms10d <- data.frame(rval = r2, ymin = t(ci_ms10)[, 1], ymax = t(ci_ms10)[, 2])
+      # 
+      # # ms10b. remove any rows with na values for these predictors then fit model
+      #     ms10b_nona <- dlf9_b[, c("pb10", "pr10", "rvi", "max", "base", "btree")]
+      #     ms10b_nona <- na.omit(ms10b_nona)
+      #     ms10b_mc <- MCMCglmm(pb10 ~ scale(rvi) + scale(max) + scale(base), random = ~ btree,
+      #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+      #                    data = ms10b_nona, nitt = nitts, burnin = burnins, thin = thins)
+      #     ms10b_lam <- ms10b_mc$VCV[, 'btree'] / (ms10b_mc$VCV[, 'btree'] + ms10b_mc$VCV[, 'units'])
+      #     ms10b_hp <- HPDinterval(ms10b_lam)
+      #     ms10b_mu <- mean(ms10b_lam)
+      #   # make a line and interval for plotting
+      #     r <- seq(from = min(scale(ms10b_nona$rvi)), to = max(scale(ms10b_nona$rvi)), length.out = 200)
+      #     post <- t(fixef(ms10b_mc))
+      #     mu_ms10b <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+      #     ci_ms10b <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+      #     r2 <- r * sd(ms10b_nona$rvi) + mean(ms10b_nona$rvi)
+      #     mu_ms10bd <- data.frame(rvi = r2, pb10 = mu_ms10b)
+      #     ci_ms10bd <- data.frame(rvi = r2, ymin = t(ci_ms10b)[, 1], ymax = t(ci_ms10b)[, 2])
+      #   # make the plot
+      #     p_ms10b <- ggplot(data = ms10b_nona, mapping = aes(x = rvi, y = pb10)) +
+      #         geom_line(data = mu_ms10d, color = "black", mapping = aes(x = rval, y = pb10), size = 1.1) +
+      #         geom_ribbon(data = ci_ms10bd, inherit.aes = FALSE, mapping = aes(x = rvi,
+      #                   ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+      #         geom_line(data = mu_ms10bd, color = "coral3", size = 1.1) +
+      #         theme_bw() +
+      #         geom_point(alpha = 0.7, shape = 1) +
+      #         geom_point(data = ms10_nona, mapping = aes(x = rval, y = pb10)) +
+      #         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+      #               axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+      #         annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "B") +
+      #         xlab("Reproductive value") +
+      #         ylab("Percentage of maximum \n after 10 minutes")
+        
+#         
+```
+
+```{r mcmc-per-res, echo = FALSE, message = FALSE, warning = FALSE}
+# ## Percent of response models ----
+# 
+#     # msd1. remove any rows with na values for these predictors then fit model
+        # msr1_nona <- dlf9[, c("d10", "pr10", "resp", "base", "btree")]
+        # msr1_nona <- na.omit(msr1_nona)
+        # msr1_mc <- MCMCglmm(pr10 ~ + scale(resp), random = ~ btree,
+        #                family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+        #                data = msr1_nona, nitt = nitts, burnin = burnins, thin = thins)
+        # msr1_lam <- msr1_mc$VCV[, 'btree'] / (msr2_mc$VCV[, 'btree'] + msr2_mc$VCV[, 'units'])
+        # msr1_hp <- HPDinterval(msr1_lam)
+        # msr1_mu <- mean(msr1_lam)
+#     
+#     # msr2. remove any rows with na values for these predictors then fit model          
+#         msr2_nona <- dlf9[, c("pb10", "pr10", "resp", "btree", "base", "max")]
+#         msr2_nona <- na.omit(msr2_nona)
+#         msr2_mc <- MCMCglmm(pr10 ~ + scale(base) + scale(max), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msr2_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msr2_lam <- msr2_mc$VCV[, 'btree'] / (msr2_mc$VCV[, 'btree'] + msr2_mc$VCV[, 'units'])
+#         msr2_hp <- HPDinterval(msr2_lam)    
+#         msr2_mu <- mean(msr2_lam)
+#     
+#     # msr3. remove any rows with na values for these predictors then fit model          
+        # msr3_nona <- dlf9[, c("pb10", "pr10", "lat", "resp", "btree", "max", "base")]
+        # msr3_nona <- na.omit(msr3_nona)
+        # msr3_mc <- MCMCglmm(pr10 ~ scale(abs(lat)) + scale(base) + scale(max), random = ~ btree,
+        #                family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+        #                data = msr3_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msr3_lam <- msr3_mc$VCV[, 'btree'] / (msr3_mc$VCV[, 'btree'] + msr3_mc$VCV[, 'units'])
+#         msr3_hp <- HPDinterval(msr3_lam)
+#         msr3_mu <- mean(msr3_lam)
+#       # make a line and interval for plotting
+#         r <- seq(from = min(scale(abs(msr3_nona$lat))), to = max(scale(abs(msr3_nona$lat))), length.out = 200)
+#         post <- t(fixef(msr3_mc))
+#         mu_msr3 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_msr3 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(abs(msr3_nona$lat)) + mean(abs(msr3_nona$lat))
+#         mu_msr3d <- data.frame(lat = r2, pr10 = mu_msr3)
+#         ci_msr3d <- data.frame(lat = r2, ymin = t(ci_msr3)[, 1], ymax = t(ci_msr3)[, 2])
+#       # make the plot
+        # p_msr3 <- ggplot(data = msr3_nona, mapping = aes(x = abs(lat), y = pr10)) +
+        #     geom_ribbon(data = ci_msr3d, inherit.aes = FALSE, mapping = aes(x = abs(lat),
+        #               ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+        #     geom_line(data = mu_msr3d, color = "coral3", size = 1.1) +
+        #     theme_bw() +
+        #     geom_point() +
+        #     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        #           axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+        #     annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "A") +
+        #     xlab("Absolute latitude") +
+        #     ylab("Percentage of response \n after 10 minutes") +
+        #     coord_cartesian(y = c(-0.08, 0.7))
+#             
+#         
+#     # ms4. remove any rows with na values for these predictors then fit model          
+#         msr4_nona <- dlf9[, c("pb10", "pr10", "mass", "resp", "btree", "base", "max")]
+#         msr4_nona <- na.omit(msr4_nona)
+#         msr4_mc <- MCMCglmm(pr10 ~ scale(log(mass)) + scale(base) + scale(max), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msr4_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msr4_lam <- msr4_mc$VCV[, 'btree'] / (msr4_mc$VCV[, 'btree'] + msr4_mc$VCV[, 'units'])
+#         msr4_hp <- HPDinterval(msr4_lam)
+#         msr4_mu <- mean(msr4_lam)
+#         
+#     # msr5. remove any rows with na values for these predictors then fit model          
+        # msr5_nona <- dlf9[, c("pb10", "pr10", "long", "resp", "btree", "base", "max")]
+        # msr5_nona <- na.omit(msr5_nona)
+#         msr5_mc <- MCMCglmm(pr10 ~ scale(long) + scale(base) + scale(max), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msr5_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msr5_lam <- msr5_mc$VCV[, 'btree'] / (msr5_mc$VCV[, 'btree'] + msr5_mc$VCV[, 'units'])
+#         msr5_hp <- HPDinterval(msr5_lam)
+#         msr5_mu <- mean(msr5_lam)
+      # # make a line and interval for plotting
+      #   r <- seq(from = min(scale(msr5_nona$long)), to = max(scale(msr5_nona$long)), length.out = 200)
+      #   post <- t(fixef(msr5_mc))
+      #   mu_msr5 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+      #   ci_msr5 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+      #   r2 <- r * sd(msr5_nona$long) + mean(msr5_nona$long)
+      #   mu_msr5d <- data.frame(long = r2, pr10 = mu_msr5)
+      #   ci_msr5d <- data.frame(long = r2, ymin = t(ci_msr5)[, 1], ymax = t(ci_msr5)[, 2])
+#         
+#     # msr5b. remove any rows with na values for these predictors then fit model          
+#         msr5b_nona <- dlf9[, c("pb10", "pr10", "avli", "resp", "btree", "base", "max")]
+#         msr5b_nona <- na.omit(msr5b_nona)
+#         msr5b_mc <- MCMCglmm(pr10 ~ scale(avli) + scale(base) + scale(max), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msr5b_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msr5b_lam <- msr5b_mc$VCV[, 'btree'] / (msr5b_mc$VCV[, 'btree'] + msr5b_mc$VCV[, 'units'])
+#         msr5b_hp <- HPDinterval(msr5b_lam)
+#         msr5b_mu <- mean(msr5b_lam)
+# # make a line and interval for plotting
+#   r <- seq(from = min(scale(msr5b_nona$avli)), to = max(scale(msr5b_nona$avli)), length.out = 200)
+#   post <- t(fixef(msr5b_mc))
+#   mu_msr5b <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#   ci_msr5b <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+#   r2 <- r * sd(msr5b_nona$avli) + mean(msr5b_nona$avli)
+#   mu_msr5bd <- data.frame(avli = r2, pr10 = mu_msr5b)
+#   ci_msr5bd <- data.frame(avli = r2, ymin = t(ci_msr5b)[, 1], ymax = t(ci_msr5b)[, 2])
+# # make the plot
+#     p_msr5b <- ggplot(data = msr5b_nona, mapping = aes(x = avli, y = pr10)) +
+#         geom_line(data = mu_msr5d, color = "black", mapping = aes(x = long, y = pr10), size = 1.1) +
+#         geom_ribbon(data = ci_msr5bd, inherit.aes = FALSE, mapping = aes(x = avli,
+#                   ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#         geom_line(data = mu_msr5bd, color = "coral3", size = 1.1) +
+#         theme_bw() +
+#         geom_point(alpha = 0.7, shape = 1) +
+#         geom_point(data = msr5_nona, mapping = aes(x = long, y = pr10)) +
+#         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#               axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#         annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B", size = 6) +
+#         xlab("Average lifespan (years)") +
+#         ylab("Percent of scope \n at 10 minutes")+
+#         coord_cartesian(y = c(-0.08, 0.7))
+#         
+#         
+    # # msr6. remove any rows with na values for these predictors then fit model
+    #     msr6_nona <- dlf9[, c("pb10", "pr10", "mr", "mass", "resp", "btree", "base", "max")]
+    #     msr6_nona <- na.omit(msr6_nona)
+    #     msr6_mc <- MCMCglmm(pr10 ~ scale(mr) + scale(log(mass)) + scale(base) + scale(max), random = ~ btree,
+    #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+    #                    data = msr6_nona, nitt = nitts, burnin = burnins, thin = thins)
+    #     msr6_lam <- msr6_mc$VCV[, 'btree'] / (msr6_mc$VCV[, 'btree'] + msr6_mc$VCV[, 'units'])
+    #     msr6_hp <- HPDinterval(msr6_lam)
+    #     msr6_mu <- mean(msr6_lam)
+    # 
+    # # msr7. remove any rows with na values for these predictors then fit model
+    #     msr7_nona <- dlf9[, c("pb10", "pr10", "mri", "mass", "resp", "btree", "base", "max")]
+    #     msr7_nona <- na.omit(msr7_nona)
+    #     msr7_mc <- MCMCglmm(pr10 ~ scale(mri) + scale(log(mass)) + scale(base) + scale(max), random = ~ btree,
+    #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+    #                    data = msr7_nona, nitt = nitts, burnin = burnins, thin = thins)
+    #     msr7_lam <- msr7_mc$VCV[, 'btree'] / (msr7_mc$VCV[, 'btree'] + msr7_mc$VCV[, 'units'])
+    #     msr7_hp <- HPDinterval(msr7_lam)
+    #     msr7_mu <- mean(msr7_lam)
+#         
+#     # ms8. remove any rows with na values for these predictors then fit model          
+#        msr8_nona <- dlf9[, c("pb10", "pr10", "temp_intra_sd", "resp", "btree", "base", "max")]
+#        msr8_nona <- na.omit(msr8_nona)
+#         msr8_mc <- MCMCglmm(pr10 ~ scale(temp_intra_sd) + scale(base) + scale(max), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msr8_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msr8_lam <- msr8_mc$VCV[, 'btree'] / (msr8_mc$VCV[, 'btree'] + msr8_mc$VCV[, 'units'])
+#         msr8_hp <- HPDinterval(msr8_lam)
+#         msr8_mu <- mean(msr8_lam)
+# # make a line and interval for plotting
+#     r <- seq(from = min(scale(msr8_nona$temp_intra_sd)), to = max(scale(msr8_nona$temp_intra_sd)), length.out = 200)
+#     post <- t(fixef(msr8_mc))
+#     mu_msr8 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#     ci_msr8 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+#     r2 <- r * sd(msr8_nona$temp_intra_sd) + mean(msr8_nona$temp_intra_sd)
+#     mu_msr8d <- data.frame(temp_intra_sd = r2, pr10 = mu_msr8)
+#     ci_msr8d <- data.frame(temp_intra_sd = r2, ymin = t(ci_msr8)[, 1], ymax = t(ci_msr8)[, 2])
+# # make the plot
+#     p_msr8 <- ggplot(data = msr8_nona, mapping = aes(x = temp_intra_sd, y = pr10)) +
+#         geom_ribbon(data = ci_msr8d, inherit.aes = FALSE, mapping = aes(x = temp_intra_sd,
+#                   ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#         geom_line(data = mu_msr8d, color = "coral3", size = 1.1) +
+#         theme_bw() +
+#         geom_point() +
+#         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#               axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#         annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A", size = 6) +
+#         xlab("Temperature (SD)") +
+#         ylab("Percent of scope \n at 10 minutes") +
+#         coord_cartesian(y = c(-0.08, 0.7))
+#         
+#         p_msr <- ggpubr::ggarrange(p_msr8, p_msr5b, nrow = 1)    
+#         
+#     # ms9. remove any rows with na values for these predictors then fit model          
+#         msr9_nona <- dlf9[, c("pb10", "pr10", "prec_intra_sd", "resp", "btree", "base", "max")]
+#         msr9_nona <- na.omit(msr9_nona)
+#         msr9_mc <- MCMCglmm(pr10 ~ scale(prec_intra_sd) + scale(base) + scale(max), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msr9_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msr9_lam <- msr9_mc$VCV[, 'btree'] / (msr9_mc$VCV[, 'btree'] + msr9_mc$VCV[, 'units'])
+#         msr9_hp <- HPDinterval(msr9_lam)
+#         msr9_mu <- mean(msr9_lam)
+          
+      #           # ms10. remove any rows with na values for these predictors then fit model
+      #   msr10_nona <- dlf9_b[, c("pb10", "pr10", "rval", "max", "base", "btree")]
+      #   msr10_nona <- na.omit(msr10_nona)
+      #   msr10_mc <- MCMCglmm(pr10 ~ scale(rval) + scale(max) + scale(base), random = ~ btree,
+      #                  family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+      #                  data = msr10_nona, nitt = nitts, burnin = burnins, thin = thins)
+      #   msr10_lam <- msr10_mc$VCV[, 'btree'] / (msr10_mc$VCV[, 'btree'] + msr10_mc$VCV[, 'units'])
+      #   msr10_hp <- HPDinterval(msr10_lam)
+      #   msr10_mu <- mean(msr10_lam)
+      #   
+      #   # make a line and interval for plotting
+      #     r <- seq(from = min(scale(msr10_nona$rval)), to = max(scale(msr10_nona$rval)), length.out = 200)
+      #     post <- t(fixef(msr10_mc))
+      #     mu_msr10 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+      #     ci_msr10 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+      #     r2 <- r * sd(msr10_nona$rval) + mean(msr10_nona$rval)
+      #     mu_msr10d <- data.frame(rval = r2, pr10 = mu_msr10)
+      #     ci_msr10d <- data.frame(rval = r2, ymin = t(ci_msr10)[, 1], ymax = t(ci_msr10)[, 2])
+      # 
+      # # ms10b. remove any rows with na values for these predictors then fit model
+      #     msr10b_nona <- dlf9_b[, c("pb10", "pr10", "rvi", "max", "base", "btree")]
+      #     msr10b_nona <- na.omit(msr10b_nona)
+      #     msr10b_mc <- MCMCglmm(pr10 ~ scale(rvi) + scale(max) + scale(base), random = ~ btree,
+      #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+      #                    data = msr10b_nona, nitt = nitts, burnin = burnins, thin = thins)
+      #     msr10b_lam <- msr10b_mc$VCV[, 'btree'] / (msr10b_mc$VCV[, 'btree'] + msr10b_mc$VCV[, 'units'])
+      #     msr10b_hp <- HPDinterval(msr10b_lam)
+      #     msr10b_mu <- mean(msr10b_lam)
+      #   # make a line and interval for plotting
+      #     r <- seq(from = min(scale(msr10b_nona$rvi)), to = max(scale(msr10b_nona$rvi)), length.out = 200)
+      #     post <- t(fixef(msr10b_mc))
+      #     mu_msr10b <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+      #     ci_msr10b <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+      #     r2 <- r * sd(msr10b_nona$rvi) + mean(msr10b_nona$rvi)
+      #     mu_msr10bd <- data.frame(rvi = r2, pr10 = mu_msr10b)
+      #     ci_msr10bd <- data.frame(rvi = r2, ymin = t(ci_msr10b)[, 1], ymax = t(ci_msr10b)[, 2])
+      #   # make the plot
+      #     p_msr10b <- ggplot(data = msr10b_nona, mapping = aes(x = rvi, y = pr10)) +
+      #         geom_line(data = mu_msr10d, color = "black", mapping = aes(x = rval, y = pr10), size = 1.1) +
+      #         geom_ribbon(data = ci_msr10bd, inherit.aes = FALSE, mapping = aes(x = rvi,
+      #                   ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+      #         geom_line(data = mu_msr10bd, color = "coral3", size = 1.1) +
+      #         theme_bw() +
+      #         geom_point(alpha = 0.7, shape = 1) +
+      #         geom_point(data = msr10_nona, mapping = aes(x = rval, y = pr10)) +
+      #         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+      #               axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+      #         annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "B") +
+      #         xlab("Reproductive value") +
+      #         ylab("Percentage of response \n after 10 minutes")
+# 
+```
+
+```{r mcmc-delta, echo = FALSE, message = FALSE, warning = FALSE}
+# ## Models for absolute change base to 10 minutes ----
+#         
+    # # msd1. remove any rows with na values for these predictors then fit model
+        # msd1_nona <- dlf9[, c("d10", "pr10", "resp", "base", "btree")]
+        # msd1_nona <- na.omit(msd1_nona)
+        # msd1_mc <- MCMCglmm(d10 ~ + scale(resp), random = ~ btree,
+        #                family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+        #                data = msd1_nona, nitt = nitts, burnin = burnins, thin = thins)
+        # msd1_lam <- msd1_mc$VCV[, 'btree'] / (msd2_mc$VCV[, 'btree'] + msd2_mc$VCV[, 'units'])
+        # msd1_hp <- HPDinterval(msd1_lam)
+        # msd1_mu <- mean(msd1_lam)
+
+#     # msd2. remove any rows with na values for these predictors then fit model          
+#         msd2_nona <- dlf9[, c("d10", "pr10", "max", "base", "btree")]
+#         msd2_nona <- na.omit(msd2_nona)
+#         msd2_mc <- MCMCglmm(d10 ~ + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msd2_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msd2_lam <- msd2_mc$VCV[, 'btree'] / (msd2_mc$VCV[, 'btree'] + msd2_mc$VCV[, 'units'])
+#         msd2_hp <- HPDinterval(msd2_lam)    
+#         msd2_mu <- mean(msd2_lam)
+#     
+#     # msd3. remove any rows with na values for these predictors then fit model          
+#         msd3_nona <- dlf9[, c("d10", "pr10", "lat", "max", "base", "btree")]
+#         msd3_nona <- na.omit(msd3_nona)
+#         msd3_mc <- MCMCglmm(d10 ~ scale(abs(lat)) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msd3_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msd3_lam <- msd3_mc$VCV[, 'btree'] / (msd3_mc$VCV[, 'btree'] + msd3_mc$VCV[, 'units'])
+#         msd3_hp <- HPDinterval(msd3_lam)
+#         msd3_mu <- mean(msd3_lam)
+#       # make a line and interval for plotting
+#         r <- seq(from = min(scale(abs(msd3_nona$lat))), to = max(scale(abs(msd3_nona$lat))), length.out = 200)
+#         post <- t(fixef(msd3_mc))
+#         mu_msd3 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_msd3 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(abs(msd3_nona$lat)) + mean(abs(msd3_nona$lat))
+#         mu_msd3d <- data.frame(lat = r2, d10 = mu_msd3)
+#         ci_msd3d <- data.frame(lat = r2, ymin = t(ci_msd3)[, 1], ymax = t(ci_msd3)[, 2])
+#       # make the plot
+#         p_msd3 <- ggplot(data = msd3_nona, mapping = aes(x = abs(lat), y = d10)) +
+#             geom_ribbon(data = ci_msd3d, inherit.aes = FALSE, mapping = aes(x = abs(lat), 
+#                       ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#             geom_line(data = mu_msd3d, color = "coral3", size = 1.1) +
+#             theme_bw() +
+#             geom_point() +
+#             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#                   axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#             annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "A") +
+#             xlab("Absolute latitude") +
+#             ylab("Cort increase from baseline \n to 10 minutes (ng/ul)")
+#             
+#         
+    # # msd4. remove any rows with na values for these predictors then fit model
+    #     msd4_nona <- dlf9[, c("d10", "pr10", "mass", "max", "base", "btree")]
+    #     msd4_nona <- na.omit(msd4_nona)
+    #     msd4_mc <- MCMCglmm(d10 ~ scale(log(mass)) + scale(max) + scale(base), random = ~ btree,
+    #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+    #                    data = msd4_nona, nitt = nitts, burnin = burnins, thin = thins)
+    #     msd4_lam <- msd4_mc$VCV[, 'btree'] / (msd4_mc$VCV[, 'btree'] + msd4_mc$VCV[, 'units'])
+    #     msd4_hp <- HPDinterval(msd4_lam)
+    #     msd4_mu <- mean(msd4_lam)
+#         
+#     # msd5. remove any rows with na values for these predictors then fit model          
+#         msd5_nona <- dlf9[, c("d10", "pr10", "long", "max", "base", "btree")]
+#         msd5_nona <- na.omit(msd5_nona)
+#         msd5_mc <- MCMCglmm(d10 ~ scale(long) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msd5_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msd5_lam <- msd5_mc$VCV[, 'btree'] / (msd5_mc$VCV[, 'btree'] + msd5_mc$VCV[, 'units'])
+#         msd5_hp <- HPDinterval(msd5_lam)
+#         msd5_mu <- mean(msd5_lam)
+#       # make a line and interval for plotting
+#         r <- seq(from = min(scale(msd5_nona$long)), to = max(scale(msd5_nona$long)), length.out = 200)
+#         post <- t(fixef(msd5_mc))
+#         mu_msd5 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_msd5 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(msd5_nona$long) + mean(msd5_nona$long)
+#         mu_msd5d <- data.frame(long = r2, d10 = mu_msd5)
+#         ci_msd5d <- data.frame(long = r2, ymin = t(ci_msd5)[, 1], ymax = t(ci_msd5)[, 2])
+#         
+#     # ms5b. remove any rows with na values for these predictors then fit model          
+#         msd5b_nona <- dlf9[, c("d10", "pr10", "avli", "max", "base", "btree")]
+#         msd5b_nona <- na.omit(msd5b_nona)
+#         msd5b_mc <- MCMCglmm(d10 ~ scale(avli) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msd5b_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msd5b_lam <- msd5b_mc$VCV[, 'btree'] / (msd5b_mc$VCV[, 'btree'] + msd5b_mc$VCV[, 'units'])
+#         msd5b_hp <- HPDinterval(msd5b_lam)
+#         msd5b_mu <- mean(msd5b_lam)
+#       # make a line and interval for plotting
+#         r <- seq(from = min(scale(msd5b_nona$avli)), to = max(scale(msd5b_nona$avli)), length.out = 200)
+#         post <- t(fixef(msd5b_mc))
+#         mu_msd5b <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_msd5b <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(msd5b_nona$avli) + mean(msd5b_nona$avli)
+#         mu_msd5bd <- data.frame(avli = r2, d10 = mu_msd5b)
+#         ci_msd5bd <- data.frame(avli = r2, ymin = t(ci_msd5b)[, 1], ymax = t(ci_msd5b)[, 2])
+#       # make the plot
+        # p_msd5b <- ggplot(data = msd5b_nona, mapping = aes(x = avli, y = d10)) +
+        #     geom_line(data = mu_msd5d, color = "black", mapping = aes(x = long, y = d10), size = 1.1) +
+        #     geom_ribbon(data = ci_msd5bd, inherit.aes = FALSE, mapping = aes(x = avli,
+        #               ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+        #     geom_line(data = mu_msd5bd, color = "coral3", size = 1.1, linetype = "dashed") +
+        #     theme_bw() +
+        #     geom_point(alpha = 0.7, shape = 1) +
+        #     geom_point(data = msd5_nona, mapping = aes(x = long, y = d10)) +
+        #     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        #           axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+        #     annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "B") +
+        #     xlab("Average lifespan") +
+        #     ylab("Cort increase from baseline \n to 10 minutes (ng/ul)")
+#         
+#         
+    # # ms6. remove any rows with na values for these predictors then fit model
+    #     msd6_nona <- dlf9[, c("d10", "pr10", "mr", "max", "mass", "base", "btree")]
+    #     msd6_nona <- na.omit(msd6_nona)
+    #     msd6_mc <- MCMCglmm(d10 ~ scale(mr) + scale(log(mass)) + scale(max) + scale(base), random = ~ btree,
+    #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+    #                    data = msd6_nona, nitt = nitts, burnin = burnins, thin = thins)
+    #     msd6_lam <- msd6_mc$VCV[, 'btree'] / (msd6_mc$VCV[, 'btree'] + msd6_mc$VCV[, 'units'])
+    #     msd6_hp <- HPDinterval(msd6_lam)
+    #     msd6_mu <- mean(msd6_lam)
+    # 
+    # ms7. remove any rows with na values for these predictors then fit model
+        # msd7_nona <- dlf9[, c("d10", "pr10", "mri", "mass", "max", "base", "btree")]
+        # msd7_nona <- na.omit(msd7_nona)
+        # msd7_mc <- MCMCglmm(d10 ~ scale(mri) + scale(log(mass)) + scale(max) + scale(base), random = ~ btree,
+        #                family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+        #                data = msd7_nona, nitt = nitts, burnin = burnins, thin = thins)
+        # msd7_lam <- msd7_mc$VCV[, 'btree'] / (msd7_mc$VCV[, 'btree'] + msd7_mc$VCV[, 'units'])
+        # msd7_hp <- HPDinterval(msd7_lam)
+        # msd7_mu <- mean(msd7_lam)
+#         
+#     # ms8. remove any rows with na values for these predictors then fit model          
+#         msd8_nona <- dlf9[, c("d10", "pr10", "temp_intra_sd", "max", "base", "btree")]
+#         msd8_nona <- na.omit(msd8_nona)
+#         msd8_mc <- MCMCglmm(d10 ~ scale(temp_intra_sd) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msd8_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msd8_lam <- msd8_mc$VCV[, 'btree'] / (msd8_mc$VCV[, 'btree'] + msd8_mc$VCV[, 'units'])
+#         msd8_hp <- HPDinterval(msd8_lam)
+#         msd8_mu <- mean(msd8_lam)
+#     # make a line and interval for plotting
+#         r <- seq(from = min(scale(msd8_nona$temp_intra_sd)), to = max(scale(msd8_nona$temp_intra_sd)), length.out = 200)
+#         post <- t(fixef(msd8_mc))
+#         mu_msd8 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#         ci_msd8 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z)) 
+#         r2 <- r * sd(msd8_nona$temp_intra_sd) + mean(msd8_nona$temp_intra_sd)
+#         mu_msd8d <- data.frame(temp_intra_sd = r2, d10 = mu_msd8)
+#         ci_msd8d <- data.frame(temp_intra_sd = r2, ymin = t(ci_msd8)[, 1], ymax = t(ci_msd8)[, 2])
+#     # make the plot
+#           p_msd8 <- ggplot(data = msd8_nona, mapping = aes(x = temp_intra_sd, y = d10)) +
+#             geom_ribbon(data = ci_msd8d, inherit.aes = FALSE, mapping = aes(x = temp_intra_sd, 
+#                       ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#             geom_line(data = mu_msd8d, color = "coral3", size = 1.1, linetype = "dashed") +
+#             theme_bw() +
+#             geom_point() +
+#             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#                   axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#             annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "C") +
+#             xlab("Temperature Variation (SD)") +
+#             ylab("Cort increase from baseline \n to 10 minutes (ng/ul)")
+#         
+#         p_msd <- ggpubr::ggarrange(p_msd3, p_msd5b, p_msd8, nrow = 1)
+#                 
+#     # ms9. remove any rows with na values for these predictors then fit model          
+#         msd9_nona <- dlf9[, c("d10", "pr10", "prec_intra_sd", "max", "base", "btree")]
+#         msd9_nona <- na.omit(msd9_nona)
+#         msd9_mc <- MCMCglmm(d10 ~ scale(prec_intra_sd) + scale(max) + scale(base), random = ~ btree,
+#                        family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                        data = msd9_nona, nitt = nitts, burnin = burnins, thin = thins)
+#         msd9_lam <- msd9_mc$VCV[, 'btree'] / (msd9_mc$VCV[, 'btree'] + msd9_mc$VCV[, 'units'])
+#         msd8_hp <- HPDinterval(msd8_lam)
+#         msd9_mu <- mean(msd9_lam)      
+      #     
+      #           # msd10. remove any rows with na values for these predictors then fit model
+      #   msd10_nona <- dlf9_b[, c("d10", "pr10", "rval", "max", "base", "btree")]
+      #   msd10_nona <- na.omit(msd10_nona)
+      #   msd10_mc <- MCMCglmm(d10 ~ scale(rval) + scale(max) + scale(base), random = ~ btree,
+      #                  family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+      #                  data = msd10_nona, nitt = nitts, burnin = burnins, thin = thins)
+      #   msd10_lam <- msd10_mc$VCV[, 'btree'] / (msd10_mc$VCV[, 'btree'] + msd10_mc$VCV[, 'units'])
+      #   msd10_hp <- HPDinterval(msd10_lam)
+      #   msd10_mu <- mean(msd10_lam)
+      #   
+      #   # make a line and interval for plotting
+      #     r <- seq(from = min(scale(msd10_nona$rval)), to = max(scale(msd10_nona$rval)), length.out = 200)
+      #     post <- t(fixef(msd10_mc))
+      #     mu_msd10 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+      #     ci_msd10 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+      #     r2 <- r * sd(msd10_nona$rval) + mean(msd10_nona$rval)
+      #     mu_msd10d <- data.frame(rval = r2, d10 = mu_msd10)
+      #     ci_msd10d <- data.frame(rval = r2, ymin = t(ci_msd10)[, 1], ymax = t(ci_msd10)[, 2])
+      # 
+      # # msd10b. remove any rows with na values for these predictors then fit model
+      #     msd10b_nona <- dlf9_b[, c("d10", "pr10", "rvi", "max", "base", "btree")]
+      #     msd10b_nona <- na.omit(msd10b_nona)
+      #     msd10b_mc <- MCMCglmm(d10 ~ scale(rvi) + scale(max) + scale(base), random = ~ btree,
+      #                    family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+      #                    data = msd10b_nona, nitt = nitts, burnin = burnins, thin = thins)
+      #     msd10b_lam <- msd10b_mc$VCV[, 'btree'] / (msd10b_mc$VCV[, 'btree'] + msd10b_mc$VCV[, 'units'])
+      #     msd10b_hp <- HPDinterval(msd10b_lam)
+      #     msd10b_mu <- mean(msd10b_lam)
+      #   # make a line and interval for plotting
+      #     r <- seq(from = min(scale(msd10b_nona$rvi)), to = max(scale(msd10b_nona$rvi)), length.out = 200)
+      #     post <- t(fixef(msd10b_mc))
+      #     mu_msd10b <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+      #     ci_msd10b <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+      #     r2 <- r * sd(msd10b_nona$rvi) + mean(msd10b_nona$rvi)
+      #     mu_msd10bd <- data.frame(rvi = r2, d10 = mu_msd10b)
+      #     ci_msd10bd <- data.frame(rvi = r2, ymin = t(ci_msd10b)[, 1], ymax = t(ci_msd10b)[, 2])
+      #   # make the plot
+      #     p_msd10b <- ggplot(data = msd10b_nona, mapping = aes(x = rvi, y = d10)) +
+      #         geom_line(data = mu_msd10d, color = "black", mapping = aes(x = rval, y = d10), size = 1.1) +
+      #         geom_ribbon(data = ci_msd10bd, inherit.aes = FALSE, mapping = aes(x = rvi,
+      #                   ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+      #         geom_line(data = mu_msd10bd, color = "coral3", size = 1.1) +
+      #         theme_bw() +
+      #         geom_point(alpha = 0.7, shape = 1) +
+      #         geom_point(data = msd10_nona, mapping = aes(x = rval, y = d10)) +
+      #         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+      #               axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+      #         annotate(geom = "text", x = Inf, y = Inf, hjust = 1.5, vjust = 1.5, label = "B") +
+      #         xlab("Reproductive value") +
+      #         ylab("Cort increase from baseline \n to 10 minutes (ng/ul)")          
+          
+
+```
+
+```{r save-mcmc, echo = FALSE, message = FALSE, warning = FALSE}
+# ## Save all the models and figures ----
+#         
+    # # percent of max
+        # saveRDS(ms2_mc, file = here::here("5_other_outputs", "ms2_mc.rds"))
+        # saveRDS(ms3_mc, file = here::here("5_other_outputs", "ms3_mc.rds"))
+        # saveRDS(ms4_mc, file = here::here("5_other_outputs", "ms4_mc.rds"))
+        # saveRDS(ms5_mc, file = here::here("5_other_outputs", "ms5_mc.rds"))
+        # saveRDS(ms5b_mc, file = here::here("5_other_outputs", "ms5b_mc.rds"))
+        # saveRDS(ms6_mc, file = here::here("5_other_outputs", "ms6_mc.rds"))
+        # saveRDS(ms7_mc, file = here::here("5_other_outputs", "ms7_mc.rds"))
+        # saveRDS(ms8_mc, file = here::here("5_other_outputs", "ms8_mc.rds"))
+        # saveRDS(ms9_mc, file = here::here("5_other_outputs", "ms9_mc.rds"))
+        # saveRDS(ms10_mc, file = here::here("5_other_outputs", "ms10_mc.rds"))
+        # saveRDS(ms10b_mc, file = here::here("5_other_outputs", "ms10b_mc.rds"))
+        
+          # saveRDS(p_ms3, file = here::here("5_other_outputs", "p_ms3.rds"))
+          # saveRDS(p_ms5b, file = here::here("5_other_outputs", "p_ms5b.rds"))
+          # saveRDS(p_ms8, file = here::here("5_other_outputs", "p_ms8.rds"))
+          # saveRDS(p_ms, file = here::here("5_other_outputs", "p_ms.rds"))
+          # saveRDS(p_ms10b, file = here::here("5_other_outputs", "p_ms10b.rds"))
+        
+        ms2_mc <- readRDS(file = here::here("5_other_outputs", "ms2_mc.rds"))
+        ms3_mc <- readRDS(file = here::here("5_other_outputs", "ms3_mc.rds"))
+        ms4_mc <- readRDS(file = here::here("5_other_outputs", "ms4_mc.rds"))
+        ms5_mc <- readRDS(file = here::here("5_other_outputs", "ms5_mc.rds"))
+        ms5b_mc <- readRDS(file = here::here("5_other_outputs", "ms5b_mc.rds"))
+        ms6_mc <- readRDS(file = here::here("5_other_outputs", "ms6_mc.rds"))
+        ms7_mc <- readRDS(file = here::here("5_other_outputs", "ms7_mc.rds"))
+        ms8_mc <- readRDS(file = here::here("5_other_outputs", "ms8_mc.rds"))
+        ms9_mc <- readRDS(file = here::here("5_other_outputs", "ms9_mc.rds"))
+        ms10_mc <- readRDS(file = here::here("5_other_outputs", "ms10_mc.rds"))
+        ms10b_mc <- readRDS(file = here::here("5_other_outputs", "ms10b_mc.rds"))
+        
+        p_ms3 <- readRDS(file = here::here("5_other_outputs", "p_ms3.rds"))
+        p_ms5b <- readRDS(file = here::here("5_other_outputs", "p_ms5b.rds"))
+        p_ms8 <- readRDS(file = here::here("5_other_outputs", "p_ms8.rds"))
+        p_ms <- readRDS(file = here::here("5_other_outputs", "p_ms.rds"))
+        p_ms10b <- readRDS(file = here::here("5_other_outputs", "p_ms10b.rds"))
+        
+      # # percent of response
+      #   saveRDS(msr2_mc, file = here::here("5_other_outputs", "msr2_mc.rds"))
+      #   saveRDS(msr3_mc, file = here::here("5_other_outputs", "msr3_mc.rds"))
+      #   saveRDS(msr4_mc, file = here::here("5_other_outputs", "msr4_mc.rds"))
+      #   saveRDS(msr5_mc, file = here::here("5_other_outputs", "msr5_mc.rds"))
+      #   saveRDS(msr5b_mc, file = here::here("5_other_outputs", "msr5b_mc.rds"))
+      #   saveRDS(msr6_mc, file = here::here("5_other_outputs", "msr6_mc.rds"))
+      #   saveRDS(msr7_mc, file = here::here("5_other_outputs", "msr7_mc.rds"))
+      #   saveRDS(msr8_mc, file = here::here("5_other_outputs", "msr8_mc.rds"))
+      #   saveRDS(msr9_mc, file = here::here("5_other_outputs", "msr9_mc.rds"))
+      # saveRDS(msr10_mc, file = here::here("5_other_outputs", "msr10_mc.rds"))
+      # saveRDS(msr10b_mc, file = here::here("5_other_outputs", "msr10b_mc.rds"))
+        
+          # saveRDS(p_msr3, file = here::here("5_other_outputs", "p_msr3.rds"))
+          # saveRDS(p_msr5b, file = here::here("5_other_outputs", "p_msr5b.rds"))
+          # saveRDS(p_msr8, file = here::here("5_other_outputs", "p_msr8.rds"))
+          # saveRDS(p_msr, file = here::here("5_other_outputs", "p_msr.rds"))
+        # saveRDS(p_msr10b, file = here::here("5_other_outputs", "p_msr10b.rds"))
+        
+        msr2_mc <- readRDS(file = here::here("5_other_outputs", "msr2_mc.rds"))
+        msr3_mc <- readRDS(file = here::here("5_other_outputs", "msr3_mc.rds"))
+        msr4_mc <- readRDS(file = here::here("5_other_outputs", "msr4_mc.rds"))
+        msr5_mc <- readRDS(file = here::here("5_other_outputs", "msr5_mc.rds"))
+        msr5b_mc <- readRDS(file = here::here("5_other_outputs", "msr5b_mc.rds"))
+        msr6_mc <- readRDS(file = here::here("5_other_outputs", "msr6_mc.rds"))
+        msr7_mc <- readRDS(file = here::here("5_other_outputs", "msr7_mc.rds"))
+        msr8_mc <- readRDS(file = here::here("5_other_outputs", "msr8_mc.rds"))
+        msr9_mc <- readRDS(file = here::here("5_other_outputs", "msr9_mc.rds"))
+        msr10_mc <- readRDS(file = here::here("5_other_outputs", "msr10_mc.rds"))
+        msr10b_mc <- readRDS(file = here::here("5_other_outputs", "msr10b_mc.rds"))
+        
+        p_msr3 <- readRDS(file = here::here("5_other_outputs", "p_msr3.rds"))
+        p_msr5b <- readRDS(file = here::here("5_other_outputs", "p_msr5b.rds"))
+        p_msr8 <- readRDS(file = here::here("5_other_outputs", "p_msr8.rds"))
+        p_msr <- readRDS(file = here::here("5_other_outputs", "p_msr.rds"))
+        p_msr10b <- readRDS(file = here::here("5_other_outputs", "p_msr10b.rds"))
+        
+      # # absolute increase
+      #   saveRDS(msd1_mc, file = here::here("5_other_outputs", "msd1_mc.rds"))
+      #   saveRDS(msd2_mc, file = here::here("5_other_outputs", "msd2_mc.rds"))
+      #   saveRDS(msd3_mc, file = here::here("5_other_outputs", "msd3_mc.rds"))
+      #   saveRDS(msd4_mc, file = here::here("5_other_outputs", "msd4_mc.rds"))
+      #   saveRDS(msd5_mc, file = here::here("5_other_outputs", "msd5_mc.rds"))
+      #   saveRDS(msd5b_mc, file = here::here("5_other_outputs", "msd5b_mc.rds"))
+      #   saveRDS(msd6_mc, file = here::here("5_other_outputs", "msd6_mc.rds"))
+      #   saveRDS(msd7_mc, file = here::here("5_other_outputs", "msd7_mc.rds"))
+      #   saveRDS(msd8_mc, file = here::here("5_other_outputs", "msd8_mc.rds"))
+      #   saveRDS(msd9_mc, file = here::here("5_other_outputs", "msd9_mc.rds"))
+      #   saveRDS(msd10_mc, file = here::here("5_other_outputs", "msd10_mc.rds"))
+      #   saveRDS(msd10b_mc, file = here::here("5_other_outputs", "msd10b_mc.rds"))
+        
+          # saveRDS(p_msd3, file = here::here("5_other_outputs", "p_msd3.rds"))
+          # saveRDS(p_msd5b, file = here::here("5_other_outputs", "p_msd5b.rds"))
+          # saveRDS(p_msd8, file = here::here("5_other_outputs", "p_msd8.rds"))
+          # saveRDS(p_msd, file = here::here("5_other_outputs", "p_msd.rds"))
+         # saveRDS(p_msd10b, file = here::here("5_other_outputs", "p_msd10b.rds"))
+        
+        msd1_mc <- readRDS(file = here::here("5_other_outputs", "msd1_mc.rds"))
+        msd2_mc <- readRDS(file = here::here("5_other_outputs", "msd2_mc.rds"))
+        msd3_mc <- readRDS(file = here::here("5_other_outputs", "msd3_mc.rds"))
+        msd4_mc <- readRDS(file = here::here("5_other_outputs", "msd4_mc.rds"))
+        msd5_mc <- readRDS(file = here::here("5_other_outputs", "msd5_mc.rds"))
+        msd5b_mc <- readRDS(file = here::here("5_other_outputs", "msd5b_mc.rds"))
+        msd6_mc <- readRDS(file = here::here("5_other_outputs", "msd6_mc.rds"))
+        msd7_mc <- readRDS(file = here::here("5_other_outputs", "msd7_mc.rds"))
+        msd8_mc <- readRDS(file = here::here("5_other_outputs", "msd8_mc.rds"))
+        msd9_mc <- readRDS(file = here::here("5_other_outputs", "msd9_mc.rds"))
+        msd10_mc <- readRDS(file = here::here("5_other_outputs", "msd10_mc.rds"))
+        msd10b_mc <- readRDS(file = here::here("5_other_outputs", "msd10b_mc.rds"))
+        
+        p_msd3 <- readRDS(file = here::here("5_other_outputs", "p_msd3.rds"))
+        p_msd5b <- readRDS(file = here::here("5_other_outputs", "p_msd5b.rds"))
+        p_msd8 <- readRDS(file = here::here("5_other_outputs", "p_msd8.rds"))
+        p_msd <- readRDS(file = here::here("5_other_outputs", "p_msd.rds"))
+        p_msd10b <- readRDS(file = here::here("5_other_outputs", "p_msd10b.rds"))
+        
+```
+
+```{r mcmc-tables, echo = FALSE, warning = FALSE, message = FALSE}
+## Compile tables ---
+  ## Function to clean
+      clean.MCMC <- function(x) {
+          sols <- summary(x)$solutions  ## pull out relevant info from model summary
+          Gcovs <- summary(x)$Gcovariances
+          Rcovs <- summary(x)$Rcovariances
+          fixed <- data.frame(row.names(sols), sols, row.names = NULL)  ## convert to dataframes with the row.names as the first col
+          random <- data.frame(row.names(Gcovs), Gcovs, row.names = NULL)
+          residual <- data.frame(row.names(Rcovs), Rcovs, row.names = NULL)
+          names(fixed)[names(fixed) == "row.names.sols."] <- "variable"  ## change the columns names to variable, so they all match
+          names(random)[names(random) == "row.names.Gcovs."] <- "variable"
+          names(residual)[names(residual) == "row.names.Rcovs."] <- "variable"
+          fixed$effect <- "fixed"  ## add ID column for type of effect (fixed, random, residual)
+          random$effect <- "random"
+          residual$effect <- "residual"
+          modelTerms <- as.data.frame(bind_rows(fixed, random, residual))  # merge it all together
+      }
+      getName.MCMC <- function(x) deparse(substitute(x))  # add the model name
+      
+  ## Build table for percent of max models ----
+      ms_list <- list(ms2_mc, ms3_mc, ms4_mc, ms5_mc, ms5b_mc, ms6_mc, ms7_mc, ms8_mc, ms9_mc, ms10_mc, ms10b_mc)
+      ms_listNames <- list("Base + Max", "Latitude", "Mass", "Lifespan", "Life imputed", 
+                           "Metabolic Rate", "Metab imputed", "Temp Variation", "Precip Variation",
+                           "Repro Val", "Repro Val imputed")
+      ms_out <- mapply(cbind, lapply(ms_list, clean.MCMC), "modelName" = ms_listNames, SIMPLIFY = FALSE)
+      ms_out_df <- as.data.frame(do.call(rbind, ms_out), stringsAsFactors = FALSE)
+      #ms_tab <- stargazer(ms_out_df, type = "text", summary = FALSE)
+      #write.table(ms_tab, file = here::here("5_other_outputs", "ms_tab.txt"))
+      write.table(ms_out_df, file = here::here("5_other_outputs", "ms_tab.txt"), sep = "\t")
+      
+  ## Build table for percent of response models ----
+      msr_list <- list(msr2_mc, msr3_mc, msr4_mc, msr5_mc, msr5b_mc, msr6_mc, msr7_mc, msr8_mc, msr9_mc, msr10_mc, msr10b_mc)
+      msr_listNames <- list("Response", "Latitude", "Mass", "Lifespan", "Life imputed", 
+                           "Metabolic Rate", "Metab imputed", "Temp Variation", "Precip Variation",
+                           "Repro Val", "Repro Val imputed")
+      msr_out <- mapply(cbind, lapply(msr_list, clean.MCMC), "modelName" = msr_listNames, SIMPLIFY = FALSE)
+      msr_out_df <- as.data.frame(do.call(rbind, msr_out), stringsAsFactors = FALSE)
+      write.table(msr_out_df, file = here::here("5_other_outputs", "msr_tab.txt"), sep = "\t")
+      
+  ## Build table for absolute increase models ----
+      msd_list <- list(msd2_mc, msd3_mc, msd4_mc, msd5_mc, msd5b_mc, msd6_mc, msd7_mc, msd8_mc, msd9_mc, msd10_mc, msd10b_mc)
+      msd_listNames <- list("Base + Max", "Latitude", "Mass", "Lifespan", "Life imputed", 
+                           "Metabolic Rate", "Metab imputed", "Temp Variation", "Precip Variation",
+                           "Repro Val", "Repro Val imputed")
+      msd_out <- mapply(cbind, lapply(msd_list, clean.MCMC), "modelName" = msd_listNames, SIMPLIFY = FALSE)
+      msd_out_df <- as.data.frame(do.call(rbind, msd_out), stringsAsFactors = FALSE)
+      write.table(msd_out_df, file = here::here("5_other_outputs", "msd_tab.txt"), sep = "\t")
+      
+```
+
+```{r mcmc-covar, echo = FALSE, warning = FALSE, message = FALSE}
+# # Individual level mcmcs for covariation between speed and scope. Setting up as above for species level ----
+        # dlfi <- dlf7
+        # dlfi$btree <- gsub(" ", "_", dlfi$btree_match)
+        # dlfi <- subset(dlfi, is.na(dlfi$btree) == FALSE & dlfi$btree != "")
+        # dlfi$btree <- gsub(" ", "_", dlfi$btree)
+        # dlfi <- dlfi[, c("per_bin10", "per_res10", "delta1t10", "lat_bin1", "hb_gen_sp", "maxc", "response", "btree")]
+        # dlfi <- na.omit(dlfi)
+#         
+# # center within species
+        # dgi <- dlfi %>%
+        #       as_tibble(.name_repair = "unique") %>%
+        #       group_by(hb_gen_sp) %>%
+        #       mutate(maxc_gc = as.numeric(scale(maxc)),
+        #              base_gc = as.numeric(scale(lat_bin1)),
+        #              resp_gc = as.numeric(scale(response)),
+        #              pb10_gc = as.numeric(scale(per_bin10)),
+        #              pr10_gc = as.numeric(scale(per_res10)),
+        #              delt_gc = as.numeric(scale(delta1t10))) %>%
+        #       as.data.frame()
+        # dgi <- na.omit(dgi)
+        # 
+        # for(i in 1:nrow(dgi)){
+        #   dgi$n <- nrow(subset(dgi, dgi$btree == dgi$btree[i]))
+        # }
+        # dgi <- subset(dgi, dgi$n > 4)
+        # 
+        # nitt2 <- nitts
+        # burn2 <- burnins
+        # thin2 <- thins
+#         
+#         # prior2 <- list(R = list(V = 1, nu = 0.002),
+#         #                G = list(G1 = list(V = diag(2), nu = 2,
+#         #                                   alpha.mu = rep(0, 2),
+#         #                                   alpha.V = diag(25^2, 2))))
+#         
+# # models for percent of maximum ----
+#         mipb1_mc <- MCMCglmm(pb10_gc ~ base_gc + maxc_gc, random = ~btree,
+#                 family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                 data = dgi, nitt = nitt2, burnin = burn2, thin = thin2)
+#         mipb2_mc <- MCMCglmm(pb10_gc ~ resp_gc, random = ~btree,
+#                 family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+#                 data = dgi, nitt = nitt2, burnin = burn2, thin = thin2)
+
+#         rb1 <- ggplot(data = dgi, mapping = aes(x = resp_gc, y = pb10_gc, by = btree)) +
+#           geom_point(alpha = 0.3, color = "slateblue") +
+#           geom_line(stat = "smooth", method = "lm", alpha = 0.4, size = .8) +
+#           geom_smooth(data = dgi, method = "lm", mapping = aes(x = resp_gc, y = pb10_gc), inherit.aes = FALSE, color = "coral3", fill = "coral3") +
+#           guides(color = "none") +
+#           theme_bw() +
+#           theme(panel.grid.minor = element_blank(), axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#           xlab("Scope (species centered)") +
+#           ylab("Percent of maximum at 10 min \n (species centered)") +
+#           annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A", size = 6) +
+#           coord_cartesian(xlim = c(-2.2, 3.5), ylim = c(-2.2, 2.2)) +
+#           ggtitle("Within Species")
+# 
+#         rb2 <- ggplot(data = dlf8, mapping = aes(x = resp, y = pb10)) +
+#           geom_point(alpha = 0.5, color = "slateblue") +
+#           geom_smooth(method = "lm", color = "coral3", fill = "coral3") +
+#           theme_bw() +
+#           theme(panel.grid.minor = element_blank(), axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#           xlab("Scope (ng/ml)") +
+#           ylab("Percent of maximum at 10 min") +
+#           annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B", size = 6) +
+#           ggtitle("Between Species")
+# 
+#         #ggpubr::ggarrange(rb1, rb2, nrow = 1)
+# # 
+# # # models for percent of response ----
+# #         mipr1_mc <- MCMCglmm(pr10_gc ~ base_gc + maxc_gc, random = ~btree,
+# #                 family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+# #                 data = dgi, nitt = nitt2, burnin = burn2, thin = thin2)
+# #         mipr2_mc <- MCMCglmm(pr10_gc ~ resp_gc, random = ~btree,
+# #                 family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+# #                 data = dgi, nitt = nitt2, burnin = burn2, thin = thin2)
+# 
+# ## Get lines for plotting from models
+#   # make a line and interval for plotting
+#     r <- seq(from = min(dgi$resp_gc), to = max(dgi$resp_gc), length.out = 200)
+#     post <- t(fixef(mipr2_mc))
+#     mu_mipr2 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#     ci_mipr2 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+#     mu_miprd <- data.frame(resp = r, per10 = mu_mipr2)
+#     ci_miprd <- data.frame(resp = r, ymin = t(ci_mipr2)[, 1], ymax = t(ci_mipr2)[, 2])
+# 
+# 
+# rp1 <- ggplot(data = dgi, mapping = aes(x = resp_gc, y = pr10_gc, by = btree)) +
+#   geom_point(alpha = 0.3, color = "slateblue") +
+#   geom_line(stat = "smooth", method = "lm", alpha = 0.4, size = .8) +
+#   geom_line(data = mu_miprd, color = "coral3", size = 1.1, inherit.aes = FALSE, mapping = aes(x = resp, y = per10)) +
+#   geom_ribbon(data = ci_miprd, inherit.aes = FALSE, mapping = aes(x = resp,
+#               ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#   guides(color = "none") +
+#   theme_bw() +
+#   theme(panel.grid.minor = element_blank(), axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#   xlab("Scope (species centered)") +
+#   ylab("Percent of scope at 10 min \n (species centered)") +
+#   annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "C", size = 6) +
+#   coord_cartesian(xlim = c(-2.2, 3.7), ylim = c(-2.2, 2.4)) +
+#   ggtitle("Among Individuals")
+# 
+# 
+#   # make a line and interval for plotting
+#     r <- seq(from = min(scale(msr1_nona$resp)), to = max(scale(msr1_nona$resp)), length.out = 200)
+#     post <- t(fixef(msr1_mc))
+#     mu_msr1 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#     ci_msr1 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+#     r2 <- r * sd(abs(msr1_nona$resp)) + mean(abs(msr1_nona$resp))
+#     mu_msrd <- data.frame(resp = r2, per10 = mu_msr1)
+#     ci_msrd <- data.frame(resp = r2, ymin = t(ci_msr1)[, 1], ymax = t(ci_msr1)[, 2])
+# 
+# rp2 <- ggplot(data = dlf8, mapping = aes(x = resp, y = pr10)) +
+#   geom_point(alpha = 0.5, color = "slateblue") +
+#   #geom_smooth(method = "lm", color = "coral3", fill = "coral3") +
+#   geom_line(data = mu_msrd, color = "coral3", size = 1.1, inherit.aes = FALSE, mapping = aes(x = resp, y = per10)) +
+#   geom_ribbon(data = ci_msrd, inherit.aes = FALSE, mapping = aes(x = resp, ymin = ymin, ymax = ymax),
+#               color = "transparent", fill = "coral3", alpha = 0.3) +
+#   theme_bw() +
+#   theme(panel.grid.minor = element_blank(), axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#   xlab("Scope (ng/ml)") +
+#   ylab("Percent of scope \n at 10 minutes (ng/ml)") +
+#   annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "D", size = 6) +
+#   ggtitle("Among Species")
+# 
+#         #covar_res <- ggpubr::ggarrange(rp1, rp2, nrow = 1)
+# # 
+# # # models for rate of increase ----
+# #         mid1_mc <- MCMCglmm(delt_gc ~ base_gc + maxc_gc, random = ~btree,
+# #                 family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+# #                 data = dgi, nitt = nitt2, burnin = burn2, thin = thin2)
+# #         mid2_mc <- MCMCglmm(delt_gc ~ resp_gc, random = ~btree,
+# #                 family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+# #                 data = dgi, nitt = nitt2, burnin = burn2, thin = thin2)
+# # 
+# # 
+#         ## Get lines for plotting from models
+#           # make a line and interval for plotting
+#             r <- seq(from = min(dgi$resp_gc), to = max(dgi$resp_gc), length.out = 200)
+#             post <- t(fixef(mid2_mc))
+#             mu_mid2 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#             ci_mid2 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+#             mu_midd <- data.frame(resp = r, delt = mu_mid2)
+#             ci_midd <- data.frame(resp = r, ymin = t(ci_mid2)[, 1], ymax = t(ci_mid2)[, 2])
+# 
+# 
+# rd1 <- ggplot(data = dgi, mapping = aes(x = resp_gc, y = delt_gc, by = btree)) +
+#   geom_point(alpha = 0.3, color = "slateblue") +
+#   geom_line(stat = "smooth", method = "lm", alpha = 0.4, size = .8) +
+#   geom_line(data = mu_midd, color = "coral3", size = 1.1, inherit.aes = FALSE, mapping = aes(x = resp, y = delt)) +
+#   geom_ribbon(data = ci_midd, inherit.aes = FALSE, mapping = aes(x = resp,
+#               ymin = ymin, ymax = ymax), color = "transparent", fill = "coral3", alpha = 0.3) +
+#   guides(color = "none") +
+#   theme_bw() +
+#   theme(panel.grid.minor = element_blank(), axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#   xlab("Scope (species centered)") +
+#   ylab("Increase from base to 10 min \n (species centered)") +
+#   annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A", size = 6) +
+#   coord_cartesian(xlim = c(-2.2, 3.7), ylim = c(-2.2, 2.4)) +
+#   ggtitle("Among Individuals")
+# 
+# 
+#           # make a line and interval for plotting
+#             r <- seq(from = min(scale(msd1_nona$resp)), to = max(scale(msd1_nona$resp)), length.out = 200)
+#             post <- t(fixef(msd1_mc))
+#             mu_msd1 <- sapply(r, function(z)mean(post[, 1] + post[, 2] * z))
+#             ci_msd1 <- sapply(r, function(z)rethinking::HPDI(post[, 1] + post[, 2] * z))
+#             r2 <- r * sd(abs(msd1_nona$resp)) + mean(abs(msd1_nona$resp))
+#             mu_msdd <- data.frame(resp = r2, delt = mu_msd1)
+#             ci_msdd <- data.frame(resp = r2, ymin = t(ci_msd1)[, 1], ymax = t(ci_msd1)[, 2])
+# 
+#         rd2 <- ggplot(data = dlf8, mapping = aes(x = resp, y = d10)) +
+#           geom_point(alpha = 0.5, color = "slateblue") +
+#           #geom_smooth(method = "lm", color = "coral3", fill = "coral3") +
+#           geom_line(data = mu_msdd, color = "coral3", size = 1.1, inherit.aes = FALSE, mapping = aes(x = resp, y = delt)) +
+#           geom_ribbon(data = ci_msdd, inherit.aes = FALSE, mapping = aes(x = resp, ymin = ymin, ymax = ymax),
+#                       color = "transparent", fill = "coral3", alpha = 0.3) +
+#           theme_bw() +
+#           theme(panel.grid.minor = element_blank(), axis.title = element_text(size = 14), axis.text = element_text(size = 12)) +
+#           xlab("Scope (ng/ml)") +
+#           ylab("Increase from base \n to 10 minutes (ng/ml)") +
+#           annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B", size = 6) +
+#           ggtitle("Among Species")
+# 
+#         covar_plot <- ggpubr::ggarrange(rd1, rd2, nrow = 1)
+# covar_plot <- ggpubr::ggarrange(rd1, rd2, rp1, rp2, nrow = 2, ncol = 2)
+# 
+# # Save and reload models and plots
+# saveRDS(mipb1_mc, here::here("5_other_outputs", "mipb1_mc.rds"))
+# saveRDS(mipb2_mc, here::here("5_other_outputs", "mipb2_mc.rds"))
+# saveRDS(mipr1_mc, here::here("5_other_outputs", "mipr1_mc.rds"))
+# saveRDS(mipr2_mc, here::here("5_other_outputs", "mipr2_mc.rds"))
+# saveRDS(mid1_mc, here::here("5_other_outputs", "mid1_mc.rds"))
+# saveRDS(mid2_mc, here::here("5_other_outputs", "mid2_mc.rds"))
+#saveRDS(covar_plot, here::here("5_other_outputs", "covar_plot.rds"))
+#         
+#         mipb1_mc <- readRDS(here::here("5_other_outputs", "mipb1_mc.rds"))
+#         mipb2_mc <- readRDS(here::here("5_other_outputs", "mipb2_mc.rds"))
+#         mipr1_mc <- readRDS(here::here("5_other_outputs", "mipr1_mc.rds"))
+#         mipr2_mc <- readRDS(here::here("5_other_outputs", "mipr2_mc.rds"))
+#         mid1_mc <- readRDS(here::here("5_other_outputs", "mid1_mc.rds"))
+#         mid2_mc <- readRDS(here::here("5_other_outputs", "mid2_mc.rds"))
+         covar_plot <- readRDS(here::here("5_other_outputs", "covar_plot.rds"))
+
+```
+
+```{r get-r2, echo = FALSE, message = FALSE, warning = FALSE}
+## Calculate marginal and conditional r2 for all mcmc models following nakagaw et al 2013
+  # Model names: 
+    # covariation
+        # mipr1_mc, mipr2_mc, mipb1_mc, mipr2_mc, mid1_mc, mid2_mc
+        #msr1_mc
+        #ms1_mc
+        #msd1_mc
+          # Calculate R2
+            # mod <- msd10b_mc  # change to name of each model
+            # mVarF <- var(as.vector(apply(mod$Sol, 2, mean) %*% t(mod$X)))
+            # r_marg <- mVarF / (mVarF + sum(apply(mod$VCV, 2, mean)))
+            # r_cond <- (mVarF + sum(apply(mod$VCV, 2, mean)[-2])) / (mVarF + sum(apply(mod$VCV, 2, mean)))
+            # r_marg
+            # r_cond
+```
+
+
+```{r westneat-stats, echo = FALSE, message = FALSE, warning = FALSE}
+# Prior copied from mcmcglmm tutorials, supposed to be mostly uninformative
+    prior <- list(G = list(G1 = list(V = 1, nu = 0.02), 
+                           G2 = list(V = diag(2), nu = 0.02),
+                           G3 = list(V = diag(2), nu = 0.02)),
+                  R = list(V = 1, nu = 0.02))
+
+    prior2 <- list(R = list(V = 1, nu = 0.002),
+                G = list(G1 = list(V = diag(2), nu = 2,
+                                   alpha.mu = rep(0, 2),
+                                   alpha.V = diag(25^2, 2))))
+
+
+# reorganize data for westneat's recommended analysis
+  # # How many iterations, burnin, and thin
+    nitts <- 1e5
+    burnins <- 5e3
+    thins <- 50
+
+  dlf5b2 <- subset(dlf5b2, is.na(dlf5b2$cort) == FALSE & is.na(dlf5b2$latency) == FALSE)
+  mm <- lmer(cort ~ 1 + latency + (1 + latency|ind_id) + (1 + latency|alpha), data = dlf5)
+  dlf5b2x <- subset(dlf5b2, is.na(dlf5b2$av_long_i) == FALSE)
+  dlf5b2x$cort <- log(dlf5b2x$cort)
+  dlf5b2x$latency <- log(dlf5b2x$latency)
+
+       mm_mc <- MCMCglmm(cort ~ 1 + latency + av_long_i, random = ~ btree + us(1 + latency):ind_id + us(1 + latency):alpha,
+                 family = "gaussian", ginverse = list(btree = inv.phy1$Ainv), prior = prior,
+                 data = dlf5b2x, nitt = nitts, burnin = burnins, thin = thins)
+
+```
+
+
+# METHODS
+
+*Database of corticosterone measurements*
+
+We used a database of corticosterone measurements taken from species studied by the Wingfield Lab between 1988 and 2005 [@wingfield1992; @wingfield1995; @wingfield2018]. Most of these data have been published previously as parts of individual studies spanning the last several decades. Baseline and stress-induced corticosterone values for most species are also included in HormoneBase [@vitousekhormonebase], but that database does not include data from each time point used here. The field and laboratory methods for these studies are similar across species and are described in detail in a number of previous papers [@wingfield1992; @wingfield1995]. 
+
+For all species, individuals were captured and a blood sample was taken in under three minutes followed by a standard stress restraint protocol with samples taken at multiple time points after capture. Samples were stored on ice in the field until plasma and red blood cells were separated by centrifugation in the lab and corticosterone concentration was assayed by radioimmunoassay [@wingfield1992; @wingfield1995]. No new data were collected in the present study. All sampling was approved by the appropriate agencies spanning a variety of institutions and locations.
+
+Because we were interested in assessing variation in the speed of the corticosterone response, we restricted our analyses to species that had at least 5 individuals sampled for at least three different time points under 35 minutes after capture. For most species, samples were collected at <3 minutes, 5 minutes, 10 minutes, and 30 minutes. A few species had samples taken at 15 or 20 minutes in place of one of the other sampling times; because we focused on the change from baseline to 10 minutes after capture, these species are excluded from most analyses. After filtering, our dataset included 58 species. Of these, 56 species also had at least 5 individuals sampled at a later time point (usually 60 minutes). Thus, most species in the dataset were sampled at five different time points during the hour after capture.
+
+The database we used included information on mass, sampling date, and location of each individual. We matched these records with life history variables previously assembled in HormoneBase [as described in @johnson2018] to include average lifespan, number of clutches per year, age at maturity, and metabolic rate [@vitousekhormonebase]. Following Vitousek et al. (2019), we calculated the number of reproduction attempts as (average lifespan - age at maturity) x number of clutches per year. Previous analyses in the HormoneBase project used imputed metabolic rate and average lifespan from a phylogenetic reconstruction for species with missing data [@vitousek2019] using the R package `phylopars` [@phylopars]. We ran analyses both with and without imputed values and in most cases results were qualitatively similar. We report the analyses with imputed values but note any cases where results differed. 
+
+Finally, we also used data from a previous HormoneBase analysis [@vitousek2019] at a population level to match corticosterone records with the amount of variation in precipitation and temperature at each location. Briefly, intra-season variation in temperature and precipitation was calculated as the standard deviation of daily temperature from a 51-year time series of global climate in 0.5$^\circ$ grids from the Climatic Research Unit [@harris2014] as described in Johnson et al. 2018. For these calculations, climate data were grouped into four three month intervals as follows: December-February, March-May, June-August, September-November [full details in @vitousek2019]. Individual capture records were matched to the climate data for the location and time period that they occurred in. Species level data were calculated by averaging climate data across each individual record included.
+
+*Assessing variation in speed*
+
+These samples were intentionally collected as close as possible to standardized times, making it difficult to estimate the entire functional shape of an acute stress response [@taff2021]. Given this limitation, we instead focused on comparing species differences at the specific time points included in the database. We calculated the speed of corticosterone responses in several ways (see Box 1). First, we calculated the absolute rate of increase in circulating corticosterone between baseline (< 3 minutes) and 10 minute sampling points. 
+
+Unsurprisingly, species often differed enormously in the absolute levels of corticosterone at baseline and in maximum corticosterone values [@vitousek2019]. Thus, responses that increase faster in absolute terms might not result in reaching their maximum values faster. To compare speed separately from the scope of the response, we also calculated the percentage of their maximum or percentage of the scope (maximum - baseline) at each sampling point. These calculations were made for each individual included in the dataset. For species level models we averaged all individuals sampled for each species. Given the timing of samples, we could not directly calculate the time elapsed between capture and maximum corticosterone for either individuals or species in this study. 
+
+*Data analysis*
+
+We first asked whether the speed of the acute corticosterone response covaried with baseline or maximum corticosterone or the scope of the response (maximum - baseline) at both a within species and between species level. For within species models, we centered and standardized all variables within each species. This allowed us to ask whether higher concentrations, relative to the species mean, were associated with an increase in speed, relative to the species mean. Mean centering within groups is the appropriate approach to ask whether deviations from the species mean (i.e. within-species) in predictors are associated with deviations in speed [@westneat2020]. 
+
+Using this standardized dataset, we fit two linear mixed models for each of our three response variables. The response variables were either the absolute increase in corticosterone from baseline to 10 minutes, the percent of maximum corticosterone at 10 minutes, or the percent of the scope (maximum - baseline) reached after 10 minutes. For each response variable we fit one model with baseline and maximum corticosterone as predictors and a second model with scope as a predictor. We fit an identical set of models for the between species analysis, except that our dataset was collapsed into averages across all individuals for each species.
+
+Next, we asked whether variation in the speed of the stress response was associated with life history variables at the species level. We did not have measurements for relevant covariates to fit similar models at the within species levels. We fit a set of models for each of the three response variables (absolute increase, percent of maximum, and percent of scope at 10 minutes). Based on the covariation patterns between speed and concentrations found in the models above, we decided to include baseline and maximum corticosterone as covariates in each of these models.
+
+For each response variable, we fit models that included either (1) intra-season temperature variability, (2) intra-season precipitation variability, (3) log transformed mass, (4) metabolic rate plus log transformed mass, (5) average lifespan, or (6) average lifetime reproductive attempts. For metabolic rate, lifespan, and reproductive attempts, we fit models with and without imputed values. All predictors were scaled to a mean of 0 and standard deviation of 1 so that effect sizes are directly comparable. The number of species included in our dataset was insufficient to fit large omnibus models including multiple predictors [as in @vitousek2019]. Given the modest sample size and the fact that many of the life history measures we considered are likely correlated, we did not attempt to rank models and instead focus on cautious interpretation of each model separately while recognizing that we cannot separate the influence of each life history trait from the others. 
+
+For most models we used the full dataset, but the reproductive value hypothesis applies specifically to samples collected during the breeding season. Thus, for that model we restricted the dataset to individual samples collected during March to August for north temperate species and September to February for south temperate species. When samples were collected from populations located within 20 degrees of the equator, and from individuals whose breeding status was unknown, we considered them to be from the breeding season if the months of collection overlapped with the breeding season of that species.
+
+In addition to the fixed effects listed above, all models also included the resolved phylogeny for these species as a random effect to account for the non-independence of species level observations. The phylogeny that we included was downloaded from www.birdtree.org and pruned to include only the species included in this study [@jetz2012; @jetz2014]. All models were fit with the R package `MCMCglmm` with a Gaussian distribution [@hadfield2010] using relatively uninformative inverse gamma priors (V = 1, $\nu$ = 0.002). Each model was run for 1,000,000 iterations with a burnin of 50,000 and thinning interval of 200. We visually inspected trace and density plots for each model and confirmed that autocorrelation values for samples were all < 0.05 [@hadfield2010]. We report marginal and conditional R$^2$ values for each model following the approach described in Nakagawa et al [-@nakagawa2013].
+
+Not all covariates or corticosterone measurements were available for every population or species. Therefore, the sample sizes for analyses differ depending on the data available for each particular question. For all cases in which data was restricted as described above, we only included species in our models when at least 5 individuals were retained after filtering.
+
+# RESULTS
+
+In total, our analysis included 7,074 corticosterone measurements from 1,750 individuals sampled from 58 different species. In addition to variation in the absolute levels of baseline and stress induced corticosterone (Figure \@ref(fig:all-comp)A), individuals and species varied substantially in both the percentage of maximum corticosterone reached by 10 minutes (Figure \@ref(fig:all-comp)B) and in the percentage of scope achieved after 10 minutes (Figure \@ref(fig:all-comp)C). 
+
+```{r all-comp, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3, fig.width = 9, fig.cap = "Comparative data from 58 species showing the overall absolute stress response (A), the percentage of maximum corticosterone reached at each sampling point (B), and the percentage of the change from baseline to maximum values reached at each sampling point (C). Each species is represented by a different line."}
+p_all_comp
+```
+
+*Covariation between speed and circulating corticosterone*  
+
+At the among individual level, a larger scope of corticosterone response was associated with a faster absolute increase during the first 10 minutes after capture (Table 1; Figure \@ref(fig:covar-plot)A; $\beta$ = 0.55, CI = 0.49 to 0.60) and with attaining a higher percentage of the scope within 10 minutes (Table 1; Figure \@ref(fig:covar-plot)C; $\beta$ = 0.10, CI = 0.04 to 0.17). Individuals with higher baseline corticosterone had a slower initial increase both in absolute terms and as a percentage of scope (Table 1; absolute $\beta$ = -0.33, CI = -0.39 to -0.28; percent of scope $\beta$ = -0.40, CI = -0.45 to -0.33), while individuals with higher maximum corticosterone had a faster increase in absolute terms and a trend for a faster increase as a percentage of scope (Table 1; absolute $\beta$ = 0.53, CI = 0.47 to 0.59; percent of scope $\beta$ = 0.06; CI = -0.01 to 0.12). In contrast, individuals that reached a larger percentage of their maximum value by 10 minutes after capture had higher baseline corticosterone, lower maximum corticosterone, and a smaller scope (Table 1; baseline $\beta$ = 0.18, CI = 0.12 to 0.25; maximum $\beta$ = -0.30, CI = -0.37 to 0.24; scope $\beta$ = -0.29, CI = -0.35 to -0.23).
+
+```{r covar-plot, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 6, fig.width = 6.5, fig.cap = "Relationship between scope of the stress response and the absolute increase in corticosterone (A-B) or percent of the scope reached (C-D) in the 10 minutes after capture. Panels A and C show relationships for individuals within species with both scope and speed centered and standardized for each species. Black lines are simple linear regressions for each species and red line and shaded region are the best fit and confidence interval from the phylogenetically informed model. Panel B and D show the relationships for species averages with the red line and shaded region illustrating the modeled fit accounting for phylogeny."}
+
+covar_plot
+
+```
+
+At the among species level, a larger scope of corticosterone response was associated with a faster absolute increase (Table 1; Figure \@ref(fig:covar-plot)B; $\beta$ = 7.97, CI = 5.91 to 10.19), but scope was not associated with the percentage of the scope reached in the first 10 minutes (Table 1; Figure \@ref(fig:covar-plot)D; $\beta$ = 0.02, CI = -0.02 to 0.06). Species with higher maximum corticosterone had a larger absolute increase in corticosterone in the first 10 minutes, but baseline corticosterone was not associated with the absolute increase (Table 1; maximum $\beta$ = 8.65, CI = 6.15 to 10.94; baseline $\beta$ = -0.47, CI = -2.81 to 1.93). Neither baseline nor maximum corticosterone were associated with the percentage of scope achieved after 10 minutes (Table 1; baseline $\beta$ = -0.02, CI = -0.06 to 0.03; maximum $\beta$ = 0.02, CI = -0.02 to 0.07). Similar to the among individual models above, species that reached a larger percentage of their maximum value by 10 minutes after capture had higher baseline corticosterone, lower maximum corticosterone, and tended to have a smaller scope (Table 1; baseline $\beta$ = 0.10, CI = 0.06 to 0.14; maximum $\beta$ = -0.06, CI = -0.10 to -0.02; scope $\beta$ = -0.04, CI = -0.08 to 0.00). 
+
+**Table 1.** Models of covariation between speed and scope among individuals and species.  
+![](table1.png)
+
+*Life history traits and variation in speed*  
+
+Species that were sampled at locations with higher intra-season variation in temperature had faster stress responses as a percentage of maximum or percentage of response and a trend toward larger absolute increases (Table 2; Figure \@ref(fig:mcmc-plot)A; percent of response $\beta$ = 0.06, CI = 0.03 to 0.10; percent of maximum $\beta$ = 0.05, CI = 0.02 to 0.08; absolute increase $\beta$ = 2.00, CI = -0.17 to 4.04). There was no evidence that any of the three response variables were related to precipitation variability, mass, metabolic rate, or reproductive value and this lack of relationship was the same when using datasets that included imputed or only measured values (Table 2).
+
+```{r mcmc-plot, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3, fig.width = 6.5, fig.cap = "Relationship between the percent of the scope achieved after 10 minutes and the intra-season variation in temperature (A) or the average lifespan (B). In both panels, black points are observed data for each species and red lines and shading indicate the predicted fit and confidence interval from phylogenetically controlled models that also account for variation in baseline and maximum corticosterone values. In panel B, the black line indicates the best fit when considering only observed values rather than imputed values and open circles indicate species whose lifespan values were imputed."}
+p_msr
+```
+
+Species with longer average lifespans had significantly slower stress responses as a percent of maximum or percent of scope and tended to have a slower absolute increase during the first 10 minutes (Table 2; Figure \@ref(fig:mcmc-plot)B; percent of scope $\beta$ = -0.04, CI = -0.08 to 0.00; percent of maximum $\beta$ = -0.05, CI = -0.10 to 0.00; absolute increase $\beta$ = -1.82, CI = -5.36 to 1.92). This same pattern was recovered in the smaller dataset using only measured values and in that case longer lifespan was significantly associated with a slower stress response for all three response variables (percent of scope $\beta$ = -0.08, CI = -0.14 to -0.02; percent of maximum $\beta$ = -0.06, CI = -0.11 to -0.01; absolute increase $\beta$ = -2.99, CI = -5.77 to -0.46).  
+  
+\newpage
+
+**Table 2.** Models of speed in relation to life history and environment.  
+![](table2.png)
+
+```{r phy-plots, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.width = 5.5, fig.align = "center", fig.cap = "Percent of response reached at 10 minutes across the species included in this study. Tree is pruned from birdtree.org."}
+# dl_phy <- dlf8
+# dl_phy$tip.label <- gsub(" ", "_", dlf8$btree)
+# 
+# lister <- as.vector(na.omit(dlf8$btree))
+# lister <- subset(lister, lister != "")
+# 
+# 
+# 
+# pruned.tree <- drop.tip(phy1, phy1$tip.label[-match(lister, phy1$tip.label)])
+# 
+# dlfx <- subset(dlf8, is.na(dlf8$btree) == FALSE & dlf8$btree != "")
+# dlfx$pr10s <- scale(dlfx$pr10)
+# dl_phy <- as.matrix(dlfx[, c("pb10", "pr10", "d10", "max", "base", "resp", "pr10s")])
+# row.names(dl_phy) <- dlfx$btree
+# #dotTree(pruned.tree, dl_phy)
+# #phylo.heatmap(pruned.tree, dl_phy, standardize = TRUE, split = c(0.75, 0.25), fsize = 0.8)
+# obj <- contMap(pruned.tree, dl_phy[, 2], plot = FALSE, sig = 2, fsize = 0.3, legend = FALSE, type = "fan")
+# obj <- setMap(obj, viridis(n = 3))
+# #obj <- setMap(obj, c("slateblue", "coral3"))
+# #plot(obj, legend = FALSE, fsize = 0.9)
+
+
+#obj <- fancyTree(pruned.tree, type = "scattergram", X = dl_phy[, c("pr10", "d10", "max")], label = "off")
+
+#phylomorphospace(pruned.tree, dl_phy[ , c(3, 4)], xlab = "Rate of increase", ylab = "Maximum value", label = "off")
+```
+
+# DISCUSSION  
+
+While the factors shaping selection on the scope of GC responses have been well described in recent years, much less is known about whether variation in the speed of the GC response is also an important trait. Our results support the general idea that the speed of the acute GC response may be a target of selection both through its association with the scope of the GC response and via independent associations with environmental context or important life history characteristics. At present, it is unclear under what conditions variation in speed or scope contribute more to fitness outcomes, largely because the available data in many published studies cannot distinguish between speed and scope. Nevertheless, our results suggest that the speed of the GC response, independent of scope, may play a role in determining how individuals and species cope with challenging environmental conditions.
+
+The patterns of covariation that we found between the speed and scope of the acute GC response were largely similar to those predicted by the optimality model of Luttbeg et al. [-@luttbeg2021]. In absolute terms, both among-individual and among-species models demonstrated a strong association between the scope of the GC response and the rate of increase during the initial 10 minutes after capture. This pattern matches the prediction that slower GC regulation will result in a smaller scope with more similar baseline and maximal GC levels to minimize the amount of time spent in a mismatched (suboptimal) phenotype [@luttbeg2021]. In contrast with the strong association between scope and absolute speed, the link between the percentage of scope achieved after 10 minutes and the scope itself was much less clear. While individuals with larger scopes were still faster in this relative measure, there was considerable heterogeneity among species in this relationship, and no overall species-level association between these measures. The fact that the absolute rate of increase in corticosterone and the relative increase as a proportion of total scope show different patterns suggests that--at least at the interspecific level--speed and scope could vary somewhat independently and may be subject to different selective pressures. More studies are needed that can separately measure speed and scope to assess the relative importance and amount of variation in these two traits, especially at the within-species level [@taff2021].
+
+Among the environmental and life history factors tested, the strongest predictor of the speed of GC responses in birds was thermal variability. Species inhabiting environments with more intra-season variation in temperature mounted faster GC responses. This is consistent with the hypothesis that the ability to mount a rapid GC response to thermal challenges may be favored in highly variable environments and suggests a “supportive” effect of selection. In contrast, variation in precipitation did not predict the speed of GC responses in birds. A previous analysis found that variation in both temperature and precipitation positively predicted baseline GC levels across vertebrates; this was interpreted as reflecting the role of baseline GCs in helping organisms to prepare for and cope with energetically demanding environments [@vitousek2019]. We suggest that the different patterns seen here in the relationships between the speed of GC responses and variation in temperature and precipitation could reflect a difference in the timescale of the threat posed by these challenges: while extreme temperatures can represent an immediate threat to survival – for which it can be important to respond rapidly – variation in precipitation likely challenges birds over longer timescales (days to weeks). Thus, the relative benefit of responding rapidly to challenges may be greater in more thermally variable environments than in those that vary in precipitation. 
+
+Shorter-lived species also mounted faster GC responses, when speed was measured as a percentage of scope or maximum corticosterone level. This pattern could reflect selection favoring more rapid stressor-induced plasticity in populations that face more extrinsic challenges (in accordance with the “supportive” hypothesis). However, the same relationship could also result from selection favoring slower responses in longer-lived species, who may be more at risk of accumulated phenotypic damage from elevated GC levels (“protective” hypothesis). 
+
+Contrary to our predictions, we did not find a significant relationship between lifetime reproductive attempts and any of the measures of the speed of the GC response during the breeding season. One measure of speed even showed a negative trend, opposite to the direction predicted. Thus, we found no support for the prediction that birds engaging in more valuable reproductive attempts (those with fewer lifetime reproductive opportunities) reduce the likelihood of GC-induced reproductive impairment by responding more slowly to threats. It is important to note, however, that the various life history measures that we assessed were tightly correlated in this data set. Species with greater longevity also had more lifetime opportunities to reproduce. Thus, while longevity is clearly a stronger predictor of the speed of GC responses than reproductive value in this dataset, the non-independence of these measures prevent us from determining the extent to which reproductive value may independently predict the speed of GC responses. 
+
+Neither body mass nor metabolic rate were associated with the speed of GC responses in birds. Previous analyses in birds and across vertebrates found that smaller species have higher baseline GCs [@vitousek2019; @bokony2009; @hau2010] but that size is unrelated to stress-induced GCs [@bokony2009; @vitousek2019; but see @hau2010]. These findings suggest that body size alone does not predict whether a faster or slower GC response is optimal. Despite widespread predictions that metabolic rate is a major driver of variation in GC release and clearance, metabolic rate appears to generally be a rather poor predictor of variation in GC levels across species. Mass-specific metabolic rate is not related to baseline GC levels within birds [@francis2018] or across vertebrates [@vitousek2019; but see @haase2016 in mammals]. Birds with higher mass-specific metabolic rates do have higher stress-induced GC levels [@francis2018], but this pattern is not present over larger taxonomic scales [@vitousek2019]. The lack of a relationship between metabolic rate and the speed of glucocorticoid responses seen here underscores that the speed of endocrine responses – like other GC regulatory traits – can evolve independently of metabolic rate. It also suggests that total energetic demand is not a strong predictor of the optimal speed of GC responses. 
+
+Taken together these findings suggest that selection favors rapid GC responses in organisms facing frequent major challenges – consistent with the “supportive” role of GCs. In contrast, there was little definitive support for the idea that slower GC responses may help to protect organisms from the costs of over responding – and thus be favored in contexts in which the costs of mounting a GC response are particularly high (the “protective” hypothesis). Note however that as described above, the observed relationship between longevity and the speed of GC responses could reflect selection favoring either “supportive” or “protective” roles. A recent phylogenetic comparative analysis found a similar overall pattern for baseline corticosterone: across vertebrates, baseline GCs are higher in populations and species in more challenging environments, consistent with the “supportive” hypothesis [@vitousek2019]. Variation in peak stress-induced corticosterone was instead best explained by selection favoring reduced costs (the "protective" hypothesis). Understanding how the speed of GC responses is related to the frequency of challenges has important implications for predicting how species will respond to climate changes that result in increased frequency, duration, and intensity of extreme weather events.  
+
+Over several decades, evidence has been growing that steroid hormones can have very rapid effects, within minutes, which are not compatible with binding to genomic receptors. The latter act as gene transcription factors requiring hours for full response [e.g., @balthazart2021]. Rapid effects of glucocorticoids in mammals, birds and amphibians have been attributed to non-genomic receptors, possibly in cell membranes, that generate behavioral and physiological responses to environmental perturbations [@panettieri2019]. Such effects include increased aggression in rats [@mikics2004], altered cell signaling [@haller2008], locomotion, anxiety and general behavior in response to an environmental challenge [@makara2001; @mikics2005]. Non-genomic receptors for GCs appear to be associated with membranes in mammals [@tasker2005] and in amphibians these membrane receptors in the central nervous system interact with G-proteins further suggesting non-genomic actions [@moore1994]. In a songbird, non-invasive treatment with corticosterone (via ingestion of a mealworm injected with the steroid hormone) increased plasma levels of corticosterone and perch-hopping activity within 15 minutes [@breuner1998]. It also appears that this rapid effect on activity is evident in birds held on spring-like long days and not manifest in birds held on winter-like short days [@breuner2000]. However, in general the mechanisms of action by non-genomic receptors are not well understood, but the perspectives presented in this paper may direct hypotheses and experimental approaches relevant to environmental context and speed of the acute stress response including new insights into the cellular mechanisms by which more rapid GC responses allow for more effective avoidance or tolerance of stressors.
+
+One limitation of this study is that we were only able to test life history related hypotheses at the between species level. There is evidence that variation in the scope of the GC response is related to life history traits or performance among species [@hau2010; @bokony2009; @jessop2013; @vitousek2019] and among individuals within a species [@schoenle2021; @breuner2008; @ouyang2011; @vitousek2014]. Similar patterns may apply to speed, but few studies address speed at the within species or within individual level [but see @baugh2013] and simulations demonstrate that separately measuring speed and scope at these levels will be challenging [@taff2021]. Moreover, while there is appreciation for the way that GC regulation varies across multiple levels [@hau2016], there is no guarantee that associations found at one level will apply at other levels [@agrawal2020]. For example, here we failed to find a relationship between speed and average reproductive attempts. However, the species in our dataset varied enormously in lifespan and this variation may have masked the importance of variation in reproductive value between more closely related species. It is entirely plausible that a more narrowly focused analysis (e.g., between populations of the same species along a latitudinal gradient) would support the reproductive value hypothesis. Studies of both speed and scope would benefit from a focus on developing frameworks that explicitly make level-specific predictions [@hau2016; @agrawal2020]. 
+
+We focused here on only the initial rapid increase in GCs after a stressor, but there are other timing related elements of the GC response that could be considered variation in speed (e.g., time spent at maximum, maximum rate of negative feedback, time to return to baseline levels). Several recent papers have demonstrated that variation in the strength of negative feedback is an important predictor of performance [@romero2010; @taff2018; @zimmer2019]. Interestingly, these results are sometimes interpreted as demonstrating variation in the speed of negative feedback even though measures are only taken at two time points, making it difficult to separate the scope and speed of negative feedback. Moreover, the speed of GC regulation represents only a single component of speed in the more general stress response [@romero2019]. There has been increasing recognition in recent years that GC regulation alone is insufficient to understand variation in the stress response, because a greater GC response does not necessarily indicate a greater response in a variety of important downstream physiological or behavioral traits [@romero2019; @gormally2020; @neuman2020]. While these studies have generally focused on variation in scope, the same arguments apply to understanding variation in speed. A more complete understanding of speed will require identifying the entire functional shape of acute GC responses.  
+
+To some extent, there has been a growing appreciation for the need to understand flexibility in the shape of GC responses, even when speed and scope are not explicitly identified as potentially separate traits of interest. The recent emphasis on within-individual reaction norm approaches for studying variation in GC regulation (speed, scope, or the entire functional shape of responses) is an exciting development in this field [@hau2016; @taff2016; @wada2014]. However, we caution that these tools are still limited in many cases by available data and simulations demonstrate that creative study designs may be required to separately assess variation in speed and scope [@taff2021]. Technical advances that allow for continual monitoring of GCs during an entire acute response under relatively natural conditions would be a huge step forward for this field. Regardless of the limitations, both the speed and scope of the acute GC response are clearly associated with important life history traits. Understanding how speed and scope covary or the conditions under which one or the other trait is a more important determinant of fitness may help to predict why some individuals and populations are able to survive in challenging conditions when others fail.
+
+
+# ACKNOWLEDGMENTS  
+
+We are grateful to Patrick Kelley for compiling the endocrine data, and to the many people in the Wingfield Lab who helped to collect and assay plasma samples. We also thank the HormoneBase Consortium and Jennifer Uehling for compiling the life history, metabolic, and environmental data. CCT and MNV were supported by NSF-IOS 1457251 and 2128337, and DARPA D17AP00033.
+
+# COMPETING INTERESTS
+
+The authors declare no competing interests.
+
+---  
+
+## Box 1: Defining and measuring the speed of acute stress responses.
+
+Conceptually, variation in the speed of the acute stress response is reflected by how quickly organisms can change their phenotype to match challenging conditions (Taff & Vitousek, 2016). However, translating this broad definition to specific measurements reveals that there are several different aspects of the stress response that could be considered as representing variation in the speed of GC upregulation.
+
+**Maximum rate of increase**: The maximum rate of change of circulating glucocorticoids during an acute response. Will most likely be achieved during the early minutes of a stress response.  
+
+**Time to reach maximum**: The total amount of time from encountering a stressor to reaching the maximum circulating glucocorticoid level.  
+
+**Time to reach x percent of maximum**: The amount of time taken from encountering a stressor to reaching a certain percentage of the maximum value. For example, species could be compared in how long it takes to reach 50% of their maximum value.  
+
+**Time to reach x percent of scope**: The amount of time taken from encountering a stressor to reaching a certain percentage of the acute glucocorticoid response (maximum - baseline values). This may differ from the percent of maximum because individuals or species that maintain high baseline glucocorticoids will start a response at a higher percentage of their maximum value.  
+
+In theory, individuals or groups could vary independently in each of these aspects of the speed of acute responses, though in practice it may be common to find strong covariation between these components. It is also worth noting that the maximum rate of increase and the time to reach a percent of the maximum are directly linked with absolute glucocorticoid levels, because higher maximum levels and higher baseline levels will necessarily covary with these measures. In contrast, the time to reach the maximum and time to reach a percent of the response are independent of absolute levels and may be more useful for comparing speed between groups that differ dramatically in absolute circulating glucocorticoids. These definitions focus only on the rapidly increasing phase of glucocorticoid responses, but similar definitions of speed could be extended to describe the negative feedback phase and return to baseline levels.  
+
+---  
+
+
+# REFERENCES
