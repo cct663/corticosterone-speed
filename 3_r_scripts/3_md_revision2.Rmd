@@ -169,6 +169,7 @@ We needed to account for the fact that there is a lag between capture and the de
       
     dlf5 <- subset(dlf5, is.na(dlf5$latency) == FALSE)
     dlf5 <- subset(dlf5, dlf5$latency < 70)
+    
 
 ```
 
@@ -228,6 +229,9 @@ We needed to account for the fact that there is a lag between capture and the de
       
       dlf5b$pop_ssn <- paste(dlf5b$hb_pop_id, dlf5b$season, sep = "_")
       dlf5b <- plyr::join(dlf5b, hb_env, "pop_ssn", "left", "first")
+      
+  # This is saving the filtered data in the public repository that can be reloaded to run the code chunks beyond here if desired
+      write.csv(dlf5b, here::here("3_r_scripts", "filtered_data.csv"))
 
 ```
 
